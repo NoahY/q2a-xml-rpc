@@ -139,10 +139,15 @@ class q2a_xmlrpc_server extends IXR_Server {
 			qa_db_qs_selectspec($userid, $data['sort'], (int)$data['start'], mysql_real_escape_string($data['cats']), null, false, (bool)$data['full'], (int)$data['size'])
 		);
 		
+		$usershtml=qa_userids_handles_html(qa_any_get_userids_handles($qarray));
+		$options=qa_post_html_defaults('Q');
+		if (isset($data['categorypathprefix']))
+			$options['categorypathprefix'] = $categorypathprefix;
+
 		$questions = array();
 		
 		foreach($qarray as $id => $post) {
-			$questions[] = $post;
+			$questions[] = qa_any_to_q_html_fields($post, $userid, qa_cookie_get(), $usershtml, null, $options);
 		}
 		
 		if(empty($questions))
