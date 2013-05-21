@@ -30,7 +30,7 @@
 		'level_disabled' => 'XML-RPC services disabled on this user capability.',
 		'user_disabled' => 'XML-RPC services not enabled for this user.',
 		
-		'xmlrpc_allow_level' => 'Access site via XML-RPC',
+		'xmlrpc_access' => 'Access site via XML-RPC',
 		
 		'incorrect_user_pass' => 'Incorrect username or password.',
 		

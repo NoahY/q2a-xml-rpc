@@ -7,7 +7,7 @@
 		function doctype() {
 			if($this->request == 'admin/permissions' && qa_get_logged_in_level()>=QA_USER_LEVEL_ADMIN) {
 
-				$permits[] = 'xmlrpc_allow_level';
+				$permits[] = 'xmlrpc_access';
 				foreach($permits as $optionname) {
 					$value = qa_opt($optionname);
 					$optionfield=array(

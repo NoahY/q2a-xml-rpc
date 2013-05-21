@@ -12,6 +12,6 @@
 
 	function qa_get_permit_options() {
 		$permits = qa_get_permit_options_base();
-		$permits[] = 'xmlrpc_allow_level';
+		$permits[] = 'xmlrpc_access';
 		return $permits;
 	}

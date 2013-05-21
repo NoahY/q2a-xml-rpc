@@ -179,7 +179,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		if(!$user)
 			return false;
 			
-		if ( qa_user_permit_error( 'xmlrpc_allow_level' ) ) {
+		if ( qa_user_permit_error( 'permit_xmlrpc_access' ) ) {
 			$this->error = new IXR_Error( 405, qa_lang( 'xmlrpc/level_disabled' ) );
 			return false;
 		}
