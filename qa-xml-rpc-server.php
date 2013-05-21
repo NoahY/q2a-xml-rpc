@@ -128,8 +128,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 			return new IXR_Error( 405, qa_lang_sub('xmlrpc/x_is_disabled','q2a.getQuestions' ));
 
 		// Parse the arguments, assuming they're in the correct order
-		$username = escape( $args[0] );
-		$password   = escape( $args[1] );
+		$username = mysql_real_escape_string( $args[0] );
+		$password   = mysql_real_escape_string( $args[1] );
 		$data = @$args[2];
 
 		if ( !$this->login( $username, $password ) )
@@ -138,7 +138,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$userid = qa_get_logged_in_userid();
 		
 		$qarray = qa_db_select_with_pending(
-			qa_db_qs_selectspec($userid, $data['sort'], (int)$data['start'], $data['cats'], null, false, false, $data['size'])
+			qa_db_qs_selectspec($userid, mysql_real_escape_string($data['sort']), (int)mysql_real_escape_string($data['start']), mysql_real_escape_string($data['cats']), null, false, false, (int)mysql_real_escape_string($data['size']))
 		);
 		
 		if($qarray == null || empty($qarray))
