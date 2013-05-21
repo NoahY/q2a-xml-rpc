@@ -172,13 +172,18 @@ class q2a_xmlrpc_server extends IXR_Server {
 		
 
 		if (QA_FINAL_EXTERNAL_USERS)
-			$user = $this->wp_login( $username, $password );
+			$this->wp_login( $username, $password );
 		else
-			$user = $this->core_login( $username, $password );
+			$this->core_login( $username, $password );
+		
+		global $qa_cached_logged_in_user;
+
+		$user=qa_get_logged_in_user();
+		$qa_cached_logged_in_user=isset($user) ? $user : false; // to save trying again                       
 		
 		if(!$user)
 			return false;
-			
+
 		if ( qa_user_permit_error( 'xmlrpc_access' ) ) {
 			$this->error = new IXR_Error( 405, qa_lang( 'xmlrpc/level_disabled' ) );
 			return false;
