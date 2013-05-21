@@ -70,25 +70,6 @@ class qa_rpc_admin {
 			'value' => qa_opt('xml_rpc_bool_get_questions'),
 			'type' => 'checkbox',
 		);
-		$fields[] = array(
-			'label' => 'Get Questions',
-			'tags' => 'NAME="xml_rpc_bool_get_question"',
-			'value' => qa_opt('xml_rpc_bool_get_question'),
-			'type' => 'checkbox',
-		);
-		$fields[] = array(
-			'label' => 'Get Answers',
-			'tags' => 'NAME="xml_rpc_bool_get_answer"',
-			'value' => qa_opt('xml_rpc_bool_get_answer'),
-			'type' => 'checkbox',
-		);
-
-		$fields[] = array(
-			'label' => 'Get Comments',
-			'tags' => 'NAME="xml_rpc_bool_get_comment"',
-			'value' => qa_opt('xml_rpc_bool_get_comment'),
-			'type' => 'checkbox',
-		);
 
 	// Post items
 

@@ -1,9 +1,9 @@
 <?php
 	function qa_get_request_content() {
-		if(qa_opt('xml_rpc_active')) {
+		if(qa_opt('xml_rpc_bool_active')) {
 			$requestlower=strtolower(qa_request());
 			if($requestlower && $requestlower === "xml-rpc") {
-				include('qa-xml-rpc-server.php');
+				qa_xml_rpc_start_server();
 				return false;
 			}
 		}

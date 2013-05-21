@@ -27,6 +27,10 @@
 
 	qa_register_plugin_phrases('qa-rpc-lang-*.php', 'xmlrpc');
 
+	function qa_xml_rpc_start_server() {
+		include('qa-xml-rpc-server.php');
+	}
+
 /*
 	Omit PHP closing tag to help avoid accidental output
 */

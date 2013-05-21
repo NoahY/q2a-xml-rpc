@@ -125,7 +125,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		//check options if this is callable
 		$call = (array) maybe_unserialize( get_option( 'q2a_xmlrpc_enabled_calls' ) );
 		if ( !qa_opt( 'xml_rpc_bool_get_questions' ) )
-			return new IXR_Error( 405, qa_lang_sub('xmlrpc/x_is_disabled','q2a.getQuestions' );
+			return new IXR_Error( 405, qa_lang_sub('xmlrpc/x_is_disabled','q2a.getQuestions' ));
 
 		// Parse the arguments, assuming they're in the correct order
 		$username = escape( $args[0] );
@@ -139,8 +139,9 @@ class q2a_xmlrpc_server extends IXR_Server {
 		
 		$qarray = qa_db_select_with_pending(
 			qa_db_qs_selectspec($userid, $data['sort'], (int)$data['start'], $data['cats'], null, false, false, $data['size'])
+		);
 		
-		if($qarray == null || empty($qarray)
+		if($qarray == null || empty($qarray))
 			$output['message'] = qa_lang( 'xmlrpc/no_items_found' );
 		else 
 			$output['message'] = qa_lang_sub( 'xmlrpc/x_items_found', count($qarray) );
