@@ -163,7 +163,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 	 * @return mixed WP_User object if authentication passed, false otherwise
 	 */
 
-	function login( $username, $password ) {
+	function login( $username, $password, $remember = false ) {
 
 		if ( !qa_opt( 'xml_rpc_bool_active' ) ) {
 			$this->error = new IXR_Error( 405, qa_lang('xmlrpc/plugin_disabled' ) );
@@ -195,7 +195,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		return $user;
 	}
 		
-	function core_login( $username, $password ) {
+	function core_login( $username, $password, $remember = false ) {
 		
 		require_once QA_INCLUDE_DIR.'qa-app-limits.php';
 
@@ -235,7 +235,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		return false;
 	}
 	
-	function wp_login( $username, $password ) {
+	function wp_login( $username, $password, $remember = false ) {
 		$user = wp_authenticate($username, $password);
 
 		if (is_wp_error($user)) {
@@ -244,6 +244,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 		}
 
 		wp_set_current_user( $user->ID );
+
+		qa_set_logged_in_user($user->ID, $username, $remember);
 
 		return $user;
 	}
