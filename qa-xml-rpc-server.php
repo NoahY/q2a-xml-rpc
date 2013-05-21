@@ -245,9 +245,6 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 		wp_set_current_user( $user->ID );
 
-		require_once QA_INCLUDE_DIR.'qa-app-users.php';
-		qa_set_logged_in_user($user->ID, $username, $remember);
-
 		return $user;
 	}
 
