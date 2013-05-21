@@ -141,8 +141,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 		
 		$questions = array();
 		
-        foreach($qarray as $id => $post) {
-			$questions[] = $q;
+		foreach($qarray as $id => $post) {
+			$questions[] = $post;
 		}
 		
 		if(empty($questions))
