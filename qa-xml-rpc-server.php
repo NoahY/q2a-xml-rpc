@@ -215,7 +215,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		
 		global $qa_cached_logged_in_user;
 
-		$user=qa_get_loggsorted_in_user();
+		$user=qa_get_logged_in_user();
 		$qa_cached_logged_in_user=isset($user) ? $user : false; // to save trying again                       
 		
 		if(!$user)
