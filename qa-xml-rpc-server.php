@@ -66,10 +66,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 			'q2a.verifyConnection'				=> 'this:call_verify_connection',
 
 			// getting
-			'q2a.getQuestions'					=> 'this:call_get_questions',
+			'q2a.getQuestions'				=> 'this:call_get_questions',
 			'q2a.getQuestion'				=> 'this:call_get_question',
-			'q2a.getAnswer'					=> 'this:call_get_answer',
-			'q2a.getComment'				=> 'this:call_get_comment',
 
 			// posting
 			'q2a.postQuestion'				=> 'this:call_post_question',
@@ -113,9 +111,9 @@ class q2a_xmlrpc_server extends IXR_Server {
 	}
 
 	/**
-	 * Get stream.
+	 * Get Question List.
 	 *
-	 * @param array $args ($username, $password, $data['sort', 'start', 'cats', 'size'])
+	 * @param array $args ($username, $password, $data['sort', 'start', 'cats', 'full', 'size'])
 	 * @return array (questions);
 	 * 
 	 */
@@ -138,21 +136,60 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$userid = qa_get_logged_in_userid();
 		
 		$qarray = qa_db_select_with_pending(
-			qa_db_qs_selectspec($userid, mysql_real_escape_string($data['sort']), (int)mysql_real_escape_string($data['start']), mysql_real_escape_string($data['cats']), null, false, false, (int)mysql_real_escape_string($data['size']))
+			qa_db_qs_selectspec($userid, $data['sort'], (int)$data['start'], (bool)$data['full'], mysql_real_escape_string($data['cats']), null, false, false, (int)$data['size'])
 		);
 		
-		if($qarray == null || empty($qarray))
+		$questions = array();
+		
+        foreach($qarray as $id => $post) {
+			$questions[] = $q;
+		}
+		
+		if(empty($questions))
 			$output['message'] = qa_lang( 'xmlrpc/no_items_found' );
 		else 
-			$output['message'] = qa_lang_sub( 'xmlrpc/x_items_found', count($qarray) );
+			$output['message'] = qa_lang_sub( 'xmlrpc/x_items_found', count($questions) );
 		
 		$output = array(
 			'confirmation' => true,
-			'data' => $qarray,
+			'data' => $questions,
 		);
 
 		return $output;
 
+	}
+
+	function get_post_avatar($post) {
+		$array = array();
+		if (QA_FINAL_EXTERNAL_USERS) {
+			global $qa_cache_wp_user_emails;
+			
+			if (!isset($qa_cache_wp_user_emails[$post['userid']]))
+				return array();
+			
+			$url = (qa_is_https_probably() ? 'https' : 'http').
+			'://www.gravatar.com/avatar/'.md5(strtolower(trim($qa_cache_wp_user_emails[$userid]))).'?s=';
+			$array['thumb'] = $url.'50';
+			$array['full'] = $url.'150';
+		}
+		else {
+			if (qa_opt('avatar_allow_gravatar') && isset($post['email']) && (@$post['flags'] & QA_USER_FLAGS_SHOW_GRAVATAR)) {
+				$url = (qa_is_https_probably() ? 'https' : 'http').
+					'://www.gravatar.com/avatar/'.md5(strtolower(trim($post['email']))).'?s=';
+				$array['thumb'] = $url.'50';
+				$array['full'] = $url.'150';
+			}
+			elseif (qa_opt('avatar_allow_upload') && (($flags & QA_USER_FLAGS_SHOW_AVATAR)) && isset($post['avatarblobid']) && strlen($post['avatarblobid'])) {
+				$array['thumb'] = qa_path_html('image', array('qa_blobid' => $post['avatarblobid'], 'qa_size' => 50), null, QA_URL_FORMAT_PARAMS);
+				$array['full'] = qa_path_html('image', array('qa_blobid' => $post['avatarblobid'], 'qa_size' => 150), null, QA_URL_FORMAT_PARAMS);
+			}
+			elseif ( (qa_opt('avatar_allow_gravatar')||qa_opt('avatar_allow_upload')) && qa_opt('avatar_default_show') && strlen(qa_opt('avatar_default_blobid')) ) {
+				$array['thumb'] = qa_path_html('image', array('qa_blobid' => qa_opt('avatar_default_blobid'), 'qa_size' => 50), null, QA_URL_FORMAT_PARAMS);
+				$array['full'] = qa_path_html('image', array('qa_blobid' => qa_opt('avatar_default_blobid'), 'qa_size' => 150), null, QA_URL_FORMAT_PARAMS);
+			}
+		}
+		
+		return $array;
 	}
 
 	/**
@@ -178,7 +215,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		
 		global $qa_cached_logged_in_user;
 
-		$user=qa_get_logged_in_user();
+		$user=qa_get_loggsorted_in_user();
 		$qa_cached_logged_in_user=isset($user) ? $user : false; // to save trying again                       
 		
 		if(!$user)
