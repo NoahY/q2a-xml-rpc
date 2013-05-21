@@ -136,7 +136,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$userid = qa_get_logged_in_userid();
 		
 		$qarray = qa_db_select_with_pending(
-			qa_db_qs_selectspec($userid, $data['sort'], (int)$data['start'], (bool)$data['full'], mysql_real_escape_string($data['cats']), null, false, false, (int)$data['size'])
+			qa_db_qs_selectspec($userid, $data['sort'], (int)$data['start'], mysql_real_escape_string($data['cats']), null, false, (bool)$data['full'], (int)$data['size'])
 		);
 		
 		$questions = array();
