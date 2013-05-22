@@ -245,7 +245,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 				$comment['username'] = $this->get_username($comment['userid']);
 					
-				$allcomments[$idx] = $comment
+				$allcomments[$idx] = $comment;
 				if (($comment['raw']['parentid'] == $questionid))
 					$qcomments[]=$comment;
 			}
