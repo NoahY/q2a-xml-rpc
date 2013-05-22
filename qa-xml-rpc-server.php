@@ -238,8 +238,15 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 
 			foreach ($allcomments as $idx => $comment) {
-				$comment = qa_post_html_fields($comment, $userid, $cookieid, $usershtml, null, $coptions);
-				if (($allcomments[$idx]['parentid'] == $questionid) && $comment['hidden'] === "0")
+				if ($comment['basetype']=='C')
+					$comment = qa_post_html_fields($comment, $userid, $cookieid, $usershtml, null, $coptions);
+				else
+					$comment = qa_post_html_fields($comment, $userid, $cookieid, $usershtml, null, $options);
+
+				$comment['username'] = $this->get_username($comment['userid']);
+					
+				$allcomments[$idx] = $comment
+				if (($comment['raw']['parentid'] == $questionid))
 					$qcomments[]=$comment;
 			}
 
@@ -255,20 +262,9 @@ class q2a_xmlrpc_server extends IXR_Server {
 				$answers[$idx]['username'] = $this->get_username($answer['userid']);
 				
 				$commentlist = array();
-				foreach ($allcomments as $idx => $comment) {
-					
-					if ($comment['basetype']=='C')
-						$comment = qa_post_html_fields($comment, $userid, $cookieid, $usershtml, null, $coptions);
-					else
-						$comment = qa_post_html_fields($comment, $userid, $cookieid, $usershtml, null, $options);
-					
-					if (($allcomments[$idx]['parentid'] != $answer['postid']) || $comment['hidden'] !== "0")
-						continue;
-
-					$comment['username'] = $this->get_username($comment['userid']);
-					
-					$commentlist[] = $comment;
-				}
+				foreach ($allcomments as $idx => $comment)
+					if ($comment['raw']['parentid'] == $answer['postid'])
+						$commentlist[] = $comment;
 
 				$answers[$idx]['comments'] = $commentlist;
 			}
