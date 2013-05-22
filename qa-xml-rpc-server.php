@@ -137,12 +137,15 @@ class q2a_xmlrpc_server extends IXR_Server {
 		);
 		
 		$usershtml=qa_userids_handles_html(qa_any_get_userids_handles($qarray));
+		$cookieid=qa_cookie_get();
+
 		$options=qa_post_html_defaults('Q', @$data['full']);
 		if (isset($data['categorypathprefix']))
 			$options['categorypathprefix'] = $categorypathprefix;
 		$options['avatarsize']=qa_opt('avatar_q_page_q_size');
-		$cookieid=qa_cookie_get();
 
+		$coptions=qa_post_html_defaults('C', true);
+		$coptions['avatarsize']=qa_opt('avatar_q_page_c_size');
 
 		$questions = array();
 		
@@ -163,13 +166,64 @@ class q2a_xmlrpc_server extends IXR_Server {
 				
 				$question = qa_post_html_fields($question, $userid, $cookieid, $usershtml, null, $options);
 
+				$answers=array();
+				
+				foreach ($childposts as $postid => $post)
+					switch ($post['type']) {
+						case 'A':
+						case 'A_HIDDEN':
+						case 'A_QUEUED':
+							$answers[$postid]=$post;
+							break;
+					}
+				
 				$answers=qa_page_q_load_as($question, $childposts);
-				$commentsfollows=qa_page_q_load_c_follows($question, $childposts, $achildposts);
+
+				$commentsfollows=array();
+				
+				foreach ($childposts as $postid => $post)
+					switch ($post['type']) {
+						case 'Q': // never show follow-on Qs which have been hidden, even to admins
+						case 'C':
+						case 'C_HIDDEN':
+						case 'C_QUEUED':
+							$commentsfollows[$postid]=$post;
+							break;
+					}
+
+				foreach ($achildposts as $postid => $post)
+					switch ($post['type']) {
+						case 'Q': // never show follow-on Qs which have been hidden, even to admins
+						case 'C':
+						case 'C_HIDDEN':
+						case 'C_QUEUED':
+							$commentsfollows[$postid]=$post;
+							break;
+					}
+
+				$aoptions=qa_post_html_defaults('A', true);
+				$aoptions['isselected']=$answer['isselected'];
+				$aoptions['avatarsize']=qa_opt('avatar_q_page_a_size');
 				
 				foreach($answers as $idx => $answer) {
-					$answers[$idx]=qa_page_q_answer_view($question, $answer, $answer['isselected'], $usershtml, false);
-					$answers[$idx]['c_list']=qa_page_q_comment_follow_list($answer, $commentsfollows, true,
-						$usershtml, false, null);
+					$a_view=qa_post_html_fields($answer, $userid, $cookieid, $usershtml, null, $aoptions);
+					
+					$commentlist = array();
+					foreach ($showcomments as $commentfollowid => $commentfollow) {
+						
+						if (($commentfollow['parentid'] != $parentid) || !$commentfollow['viewable'])
+							continue;
+						
+						if ($commentfollow['basetype']=='C') {
+							$commentlist[$commentfollowid]=qa_post_html_fields($commentfollow, $userid, $cookieid, $usershtml, null, $coptions);
+
+						} elseif ($commentfollow['basetype']=='Q') {
+							
+							$commentlist[$commentfollowid]=qa_post_html_fields($commentfollow, $userid, $cookieid, $usershtml, null, $options);
+						}
+					}
+
+					$answers[$idx]['comments'] = $commentlist;
 				}
 				
 				$question['answers'] = $answers;
