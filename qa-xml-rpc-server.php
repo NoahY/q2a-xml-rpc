@@ -239,7 +239,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 			foreach ($allcomments as $idx => $comment) {
 				$comment = qa_post_html_fields($comment, $userid, $cookieid, $usershtml, null, $coptions);
-				if (($allcomments[$idx]['parentid'] == $questionid) && $comment['viewable'])
+				if (($allcomments[$idx]['parentid'] == $questionid) && $comment['hidden'] === "0")
 					$qcomments[]=$comment;
 			}
 
@@ -262,7 +262,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 					else
 						$comment = qa_post_html_fields($comment, $userid, $cookieid, $usershtml, null, $options);
 					
-					if (($allcomments[$idx]['parentid'] != $answer['postid']) || !$comment['viewable'])
+					if (($allcomments[$idx]['parentid'] != $answer['postid']) || $comment['hidden'] !== "0")
 						continue;
 
 					$comment['username'] = $this->get_username($comment['userid']);
