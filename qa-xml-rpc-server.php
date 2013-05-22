@@ -257,7 +257,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 				$commentlist = array();
 				foreach ($allcomments as $idx => $comment) {
 					
-					if ($comment['basetype']=='C') {
+					if ($comment['basetype']=='C')
 						$comment = qa_post_html_fields($comment, $userid, $cookieid, $usershtml, null, $coptions);
 					else
 						$comment = qa_post_html_fields($comment, $userid, $cookieid, $usershtml, null, $options);
