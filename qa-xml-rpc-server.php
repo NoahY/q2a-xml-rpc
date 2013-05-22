@@ -268,36 +268,76 @@ class q2a_xmlrpc_server extends IXR_Server {
 	// worker functions
 
 	function get_post_avatar($post) {
-		$array = array();
 		if (QA_FINAL_EXTERNAL_USERS) {
-			global $qa_cache_wp_user_emails;
+			if(!function_exists('get_option'))
+				return false;
 			
-			if (!isset($qa_cache_wp_user_emails[$post['userid']]))
-				return array();
-			
-			$url = (qa_is_https_probably() ? 'https' : 'http').
-			'://www.gravatar.com/avatar/'.md5(strtolower(trim($qa_cache_wp_user_emails[$post['userid']]))).'?s=';
-			$array['thumb'] = $url.'50';
-			$array['full'] = $url.'150';
+			if ( ! get_option('show_avatars') )
+				return false;
+
+			$size = 96;
+
+			$safe_alt = '';
+
+			$id =  $post['userid'];
+			$user = get_userdata($id);
+			if ( $user )
+				$email = $user->user_email;
+
+			$avatar_default = get_option('avatar_default');
+			if ( empty($avatar_default) )
+				$default = 'mystery';
+			else
+				$default = $avatar_default;
+
+			if ( !empty($email) )
+				$email_hash = md5( strtolower( trim( $email ) ) );
+
+			if ( is_ssl() ) {
+				$host = 'https://secure.gravatar.com';
+			} else {
+				if ( !empty($email) )
+					$host = sprintf( "http://%d.gravatar.com", ( hexdec( $email_hash[0] ) % 2 ) );
+				else
+					$host = 'http://0.gravatar.com';
+			}
+
+			if ( 'mystery' == $default )
+				$default = "$host/avatar/ad516503a11cd5ca435acc9bb6523536?s={$size}"; // ad516503a11cd5ca435acc9bb6523536 == md5('unknown@gravatar.com')
+			elseif ( 'blank' == $default )
+				$default = $email ? 'blank' : includes_url( 'images/blank.gif' );
+			elseif ( !empty($email) && 'gravatar_default' == $default )
+				$default = '';
+			elseif ( 'gravatar_default' == $default )
+				$default = "$host/avatar/?s={$size}";
+			elseif ( empty($email) )
+				$default = "$host/avatar/?d=$default&amp;s={$size}";
+			elseif ( strpos($default, 'http://') === 0 )
+				$default = add_query_arg( 's', $size, $default );
+
+			if ( !empty($email) ) {
+				$out = "$host/avatar/";
+				$out .= $email_hash;
+				$out .= '?s='.$size;
+				$out .= '&amp;d=' . urlencode( $default );
+
+				$rating = get_option('avatar_rating');
+				if ( !empty( $rating ) )
+					$out .= "&amp;r={$rating}";
+
+				return $out;
+			} else
+				return $default;
 		}
 		else {
-			if (qa_opt('avatar_allow_gravatar') && isset($post['email']) && (@$post['flags'] & QA_USER_FLAGS_SHOW_GRAVATAR)) {
-				$url = (qa_is_https_probably() ? 'https' : 'http').
-					'://www.gravatar.com/avatar/'.md5(strtolower(trim($post['email']))).'?s=';
-				$array['thumb'] = $url.'50';
-				$array['full'] = $url.'150';
-			}
-			elseif (qa_opt('avatar_allow_upload') && (($flags & QA_USER_FLAGS_SHOW_AVATAR)) && isset($post['avatarblobid']) && strlen($post['avatarblobid'])) {
-				$array['thumb'] = qa_path_html('image', array('qa_blobid' => $post['avatarblobid'], 'qa_size' => 50), null, QA_URL_FORMAT_PARAMS);
-				$array['full'] = qa_path_html('image', array('qa_blobid' => $post['avatarblobid'], 'qa_size' => 150), null, QA_URL_FORMAT_PARAMS);
-			}
-			elseif ( (qa_opt('avatar_allow_gravatar')||qa_opt('avatar_allow_upload')) && qa_opt('avatar_default_show') && strlen(qa_opt('avatar_default_blobid')) ) {
-				$array['thumb'] = qa_path_html('image', array('qa_blobid' => qa_opt('avatar_default_blobid'), 'qa_size' => 50), null, QA_URL_FORMAT_PARAMS);
-				$array['full'] = qa_path_html('image', array('qa_blobid' => qa_opt('avatar_default_blobid'), 'qa_size' => 150), null, QA_URL_FORMAT_PARAMS);
-			}
+			if (qa_opt('avatar_allow_gravatar') && isset($post['email']) && (@$post['flags'] & QA_USER_FLAGS_SHOW_GRAVATAR)) 
+				return (qa_is_https_probably() ? 'https' : 'http').
+					'://www.gravatar.com/avatar/'.md5(strtolower(trim($post['email']))).'?s='.$size;
+			elseif (qa_opt('avatar_allow_upload') && (($flags & QA_USER_FLAGS_SHOW_AVATAR)) && isset($post['avatarblobid']) && strlen($post['avatarblobid']))
+				return qa_path_html('image', array('qa_blobid' => $post['avatarblobid'], 'qa_size' => $size), null, QA_URL_FORMAT_PARAMS);
+			elseif ( (qa_opt('avatar_allow_gravatar')||qa_opt('avatar_allow_upload')) && qa_opt('avatar_default_show') && strlen(qa_opt('avatar_default_blobid')) )
+				return qa_path_html('image', array('qa_blobid' => qa_opt('avatar_default_blobid'), 'qa_size' => $size), null, QA_URL_FORMAT_PARAMS);
 		}
-		
-		return $array;
 	}
 
 	/**
