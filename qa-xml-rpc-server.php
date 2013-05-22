@@ -127,6 +127,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		if(isset($data['action'])) {
 			switch($data['action']) {
 				case 'vote':
+					require_once QA_INCLUDE_DIR.'qa-app-votes.php';
 					$postid = (int)$data['action_id'];
 					$vote = (int)$data['vote'];
 					
