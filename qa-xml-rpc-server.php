@@ -237,9 +237,11 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$question['avatar'] = $this->get_post_avatar($questionin);
 
 
-			foreach ($allcomments as $comment)
-				if (($comment['parentid'] == $questionid) && $comment['viewable'])
+			foreach ($allcomments as $idx => $comment) {
+				$comment = qa_post_html_fields($comment, $userid, $cookieid, $usershtml, null, $coptions);
+				if (($allcomments[$idx]['parentid'] == $questionid) && $comment['viewable'])
 					$qcomments[]=$comment;
+			}
 
 			$aoptions=qa_post_html_defaults('A', true);
 			$aoptions['isselected']=$answer['isselected'];
@@ -253,20 +255,19 @@ class q2a_xmlrpc_server extends IXR_Server {
 				$answers[$idx]['username'] = $this->get_username($answer['userid']);
 				
 				$commentlist = array();
-				foreach ($allcomments as $comment) {
+				foreach ($allcomments as $idx => $comment) {
 					
-					if (($comment['parentid'] != $answer['postid']) || !$comment['viewable'])
+					if ($comment['basetype']=='C') {
+						$comment = qa_post_html_fields($comment, $userid, $cookieid, $usershtml, null, $coptions);
+					else
+						$comment = qa_post_html_fields($comment, $userid, $cookieid, $usershtml, null, $options);
+					
+					if (($allcomments[$idx]['parentid'] != $answer['postid']) || !$comment['viewable'])
 						continue;
 
 					$comment['username'] = $this->get_username($comment['userid']);
 					
-					if ($comment['basetype']=='C') {
-						$commentlist[]=qa_post_html_fields($comment, $userid, $cookieid, $usershtml, null, $coptions);
-
-					} elseif ($comment['basetype']=='Q') {
-						
-						$commentlist[]=qa_post_html_fields($comment, $userid, $cookieid, $usershtml, null, $options);
-					}
+					$commentlist[] = $comment;
 				}
 
 				$answers[$idx]['comments'] = $commentlist;
