@@ -236,6 +236,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$question = qa_post_html_fields($questionin, $userid, $cookieid, $usershtml, null, $options);
 			$question['avatar'] = $this->get_post_avatar($questionin);
 
+			$qcomments = array();
 
 			foreach ($allcomments as $idx => $comment) {
 				if ($comment['basetype']=='C')
