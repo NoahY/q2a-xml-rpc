@@ -245,18 +245,23 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$aoptions['isselected']=$answer['isselected'];
 			
 			foreach($answers as $idx => $answer) {
+				
 				$answers[$idx]=qa_post_html_fields($answer, $userid, $cookieid, $usershtml, null, $aoptions);
 				
 				$answers[$idx]['avatar'] = $this->get_post_avatar($answer);
+
+				$answers[$idx]['username'] = $this->get_username($answer['userid']);
 				
 				$commentlist = array();
 				foreach ($allcomments as $comment) {
 					
 					if (($comment['parentid'] != $parentid) || !$comment['viewable'])
 						continue;
+
+					$comment['username'] = $this->get_username($comment['userid']);
 					
 					if ($comment['basetype']=='C') {
-						$commentlist[$commentid]=qa_post_html_fields($comment, $userid, $cookieid, $usershtml, null, $coptions);
+						$commentlist[]=qa_post_html_fields($comment, $userid, $cookieid, $usershtml, null, $coptions);
 
 					} elseif ($comment['basetype']=='Q') {
 						
@@ -502,10 +507,26 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$user['username'] = $obj->user_nicename;
 		}
 		else {
-			$user['display_name'] = $obj->display_name;
+			$userprofile=qa_db_select_with_pending(
+				qa_db_user_profile_selectspec($userid, true)
+			);
+			$user['display_name'] = @$userprofile['name']?$userprofile['name']:qa_get_logged_in_handle();
 			$user['username'] = qa_get_logged_in_handle();
 		}
 		$user['level'] = qa_get_logged_in_level();
+	}
+
+	function get_username($userid) {
+		if(QA_FINAL_EXTERNAL_USERS) {
+			$obj = get_userdata( $userid );
+			return $obj->display_name;
+		}
+		else {
+			$userprofile=qa_db_select_with_pending(
+					qa_db_user_profile_selectspec($userid, true)
+				);
+			return @$userprofile['name']?$userprofile['name']:qa_get_logged_in_handle();
+		}
 	}
 
 	function get_qa_opts() {
