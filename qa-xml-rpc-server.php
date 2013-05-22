@@ -253,7 +253,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$aoptions=qa_post_html_defaults('A', true);
 			$aoptions['isselected']=$answer['isselected'];
 			
-			foreach($answers as $idx => $answer) {
+			foreach($answers as get$answer) {
 				
 				$answers[$idx]=qa_post_html_fields($answer, $userid, $cookieid, $usershtml, null, $aoptions);
 				
@@ -266,11 +266,11 @@ class q2a_xmlrpc_server extends IXR_Server {
 					if ($comment['raw']['parentid'] == $answer['postid'])
 						$commentlist[] = $comment;
 
-				$answers[$idx]['comments'] = $commentlist;
+				$answers[$idx]['comments'] = array_values($commentlist);
 			}
 			
-			$question['answers'] = $answers;
-			$question['comments'] = $qcomments;
+			$question['answers'] = array_values($answers);
+			$question['comments'] = array_values($qcomments);
 			$question['parentquestion'] = $parentquestion;
 			$question['closepost'] = $closepost;
 			$question['extravalue'] = $extravalue;
