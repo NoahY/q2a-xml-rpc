@@ -246,9 +246,9 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 				$comment['username'] = $this->get_username($comment['userid']);
 					
-				$allcomments[$idx] = $comment;
 				if (($comment['raw']['parentid'] == $questionid))
 					$qcomments[]=$comment;
+				$allcomments[$idx] = $comment;
 			}
 
 			$aoptions=qa_post_html_defaults('A', true);
@@ -262,12 +262,12 @@ class q2a_xmlrpc_server extends IXR_Server {
 				$answer['avatar'] = $this->get_post_avatar($answer['raw']);
 				$answer['username'] = $this->get_username($answer['raw']['userid']);
 				
-				$commentlist = array();
+				$acomments = array();
 				foreach ($allcomments as $comment)
 					if ($comment['raw']['parentid'] == $answer['postid'])
-						$commentlist[] = $comment;
+						$acomments[] = $comment;
 
-				$answer['comments'] = $commentlist;
+				$answer['comments'] = $acomments;
 				
 				$outanswers[] = $answer;
 			}
