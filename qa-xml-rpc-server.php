@@ -131,6 +131,26 @@ class q2a_xmlrpc_server extends IXR_Server {
 			return $this->error;
 
 		$userid = qa_get_logged_in_userid();
+		$cookieid=qa_cookie_get();
+
+		if(isset($data['action'])) {
+			switch($data['action']) {
+				case 'vote':
+					$postid = (int)$data['action_id'];
+					$vote = (int)$data['vote'];
+					
+					if (($vote > 0 && !qa_opt( 'xml_rpc_bool_q_upvote' ) ) || ($vote < 0 && !qa_opt( 'xml_rpc_bool_q_dwonvote' ) ))
+						break;
+						
+					$post=qa_db_select_with_pending(qa_db_full_post_selectspec($userid, $postid));
+
+					$voteerror=qa_vote_error_html($post, $vote, $userid, qa_request());
+					
+					if ($voteerror === false)
+						qa_vote_set($post, $userid, qa_get_logged_in_handle(), $cookieid, $vote);
+			}
+		}
+
 		
 		$qarray = qa_db_select_with_pending(
 			qa_db_qs_selectspec($userid, $data['sort'], (int)$data['start'], mysql_real_escape_string($data['cats']), null, false, false, (int)$data['size'])
@@ -141,6 +161,10 @@ class q2a_xmlrpc_server extends IXR_Server {
 		
 		foreach($qarray as $questionid => $post) {
 			$question = $this->get_single_question($data, $post['postid']);
+			
+			if(isset($data['action_id']) && $post['postid'] == $data['action_id'])
+				$output['acted'] = count($questions);
+				
 			$questions[] = $question;
 			
 		}
@@ -150,72 +174,13 @@ class q2a_xmlrpc_server extends IXR_Server {
 		else 
 			$output['message'] = qa_lang_sub( 'xmlrpc/x_items_found', count($questions) );
 		
-		$output = array(
-			'confirmation' => true,
-			'data' => $questions,
-		);
+		$output['confirmation'] = true;
+		$output['data'] = $questions;
 
 		return $output;
 
 	}
 
-
-	/**
-	 * Upvote Question
-	 *
-	 * @param array $args ($username, $password, $data['postid'])
-	 * @return array ();
-	 * 
-	 */
-	function call_vote_question( $args ) {
-		global $bp;
-
-		//check options if this is callable
-		$call = (array) maybe_unserialize( get_option( 'q2a_xmlrpc_enabled_calls' ) );
-		
-		// Parse the arguments, assuming they're in the correct order
-		$username = mysql_real_escape_string( $args[0] );
-		$password   = mysql_real_escape_string( $args[1] );
-		$data = @$args[2];
-
-		$vote = (int)$data['vote'];
-		
-		if ($vote > 0 && !qa_opt( 'xml_rpc_bool_q_upvote' ) )
-			return new IXR_Error( 405, qa_lang_sub('xmlrpc/x_is_disabled','q2a.upVoteQuestion' ));
-		if ($vote < 0 && !qa_opt( 'xml_rpc_bool_q_dwonvote' ) )
-			return new IXR_Error( 405, qa_lang_sub('xmlrpc/x_is_disabled','q2a.downVoteQuestion' ));
-
-
-		if ( !$this->login( $username, $password ) )
-			return $this->error;
-
-		$userid = qa_get_logged_in_userid();
-		$postid = $data['postid'];
-		$cookieid=qa_cookie_get();
-
-		$post=qa_db_select_with_pending(qa_db_full_post_selectspec($userid, $postid));
-
-		$voteerror=qa_vote_error_html($post, $vote, $userid, qa_request());
-		
-		if ($voteerror !== false)
-			return array(
-				'confirmation' => false,
-				'message' => qa_lang( 'xmlrpc/vote_error' ),
-			);
-		
-		qa_vote_set($post, $userid, qa_get_logged_in_handle(), $cookieid, $vote);
-		
-		$output = $this->decide_output($voteerror);
-		
-		$output['votes'] = qa_db_read_one_value(
-					qa_db_query_sub(
-						"SELECT netvotes FROM ^posts WHERE postid=#",
-						$postid
-						),
-					true
-				);
-		return $output;
-	}
 
 	// worker functions
 
