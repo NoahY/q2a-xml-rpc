@@ -253,7 +253,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$aoptions=qa_post_html_defaults('A', true);
 			$aoptions['isselected']=$answer['isselected'];
 			
-			foreach($answers as get$answer) {
+			foreach($answers as $answer) {
 				
 				$answers[$idx]=qa_post_html_fields($answer, $userid, $cookieid, $usershtml, null, $aoptions);
 				
