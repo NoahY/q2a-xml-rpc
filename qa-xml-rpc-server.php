@@ -161,10 +161,6 @@ class q2a_xmlrpc_server extends IXR_Server {
 					isset($userid) ? qa_db_is_favorite_selectspec($userid, QA_ENTITY_QUESTION, $questionid) : null
 				);
 
-				$usershtml=qa_userids_handles_html(array_merge(array($question), $answers, $commentsfollows), true);
-				
-				$question = qa_post_html_fields($question, $userid, $cookieid, $usershtml, null, $options);
-				$question['avatar'] = $this->get_post_avatar($question);
 
 				$answers=array();
 				
@@ -176,6 +172,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 							$answers[]=$post;
 							break;
 					}
+
 				
 				$commentsfollows=array();
 				
@@ -198,6 +195,12 @@ class q2a_xmlrpc_server extends IXR_Server {
 							$commentsfollows[$postid]=$post;
 							break;
 					}
+
+				$usershtml=qa_userids_handles_html(array_merge(array($question), $answers, $commentsfollows), true);
+				
+				$question = qa_post_html_fields($question, $userid, $cookieid, $usershtml, null, $options);
+				$question['avatar'] = $this->get_post_avatar($question);
+
 
 				foreach ($commentsfollows as $commentfollowid => $commentfollow)
 					if (($commentfollow['parentid']==$questionid) && $commentfollow['viewable'])
