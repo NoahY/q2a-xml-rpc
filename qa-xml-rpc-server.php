@@ -137,16 +137,18 @@ class q2a_xmlrpc_server extends IXR_Server {
 		);
 		
 		$usershtml=qa_userids_handles_html(qa_any_get_userids_handles($qarray));
-		$options=qa_post_html_defaults('Q');
+		$options=qa_post_html_defaults('Q', @$data['full']);
 		if (isset($data['categorypathprefix']))
 			$options['categorypathprefix'] = $categorypathprefix;
+		$options['avatarsize']=qa_opt('avatar_q_page_q_size');
+		$cookieid=qa_cookie_get();
+
 
 		$questions = array();
 		
 		foreach($qarray as $questionid => $post) {
 			
 			if(@$data['full']) {
-				$cookieid=qa_cookie_get();
 				
 				@list($question, $childposts, $achildposts, $parentquestion, $closepost, $extravalue, $categories, $favorite)=qa_db_select_with_pending(
 					qa_db_full_post_selectspec($userid, $questionid),
@@ -158,6 +160,9 @@ class q2a_xmlrpc_server extends IXR_Server {
 					qa_db_category_nav_selectspec($questionid, true, true, true),
 					isset($userid) ? qa_db_is_favorite_selectspec($userid, QA_ENTITY_QUESTION, $questionid) : null
 				);
+				
+				$question = qa_post_html_fields($question, $userid, $cookieid, $usershtml, null, $options);
+				
 				$question['childposts'] = $childposts;
 				$question['achildposts'] = $achildposts;
 				$question['parentquestion'] = $parentquestion;
@@ -165,6 +170,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 				$question['extravalue'] = $extravalue;
 				$question['categories'] = $categories;
 				$question['favorite'] = $favorite;
+				
 			} 
 			else 
 				$question = qa_any_to_q_html_fields($post, $userid, qa_cookie_get(), $usershtml, null, $options);
