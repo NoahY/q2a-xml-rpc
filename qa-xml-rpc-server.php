@@ -162,9 +162,17 @@ class q2a_xmlrpc_server extends IXR_Server {
 				);
 				
 				$question = qa_post_html_fields($question, $userid, $cookieid, $usershtml, null, $options);
+
+				$answers=qa_page_q_load_as($question, $childposts);
+				$commentsfollows=qa_page_q_load_c_follows($question, $childposts, $achildposts);
 				
-				$question['childposts'] = $childposts;
-				$question['achildposts'] = $achildposts;
+				foreach($answers as $idx => $answer) {
+					$answers[$idx]=qa_page_q_answer_view($question, $answer, $answer['isselected'], $usershtml, false);
+					$answers[$idx]['c_list']=qa_page_q_comment_follow_list($answer, $commentsfollows, true,
+						$usershtml, false, null);
+				}
+				
+				$question['answers'] = $answers;
 				$question['parentquestion'] = $parentquestion;
 				$question['closepost'] = $closepost;
 				$question['extravalue'] = $extravalue;
