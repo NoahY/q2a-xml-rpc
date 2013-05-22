@@ -276,7 +276,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 				return array();
 			
 			$url = (qa_is_https_probably() ? 'https' : 'http').
-			'://www.gravatar.com/avatar/'.md5(strtolower(trim($qa_cache_wp_user_emails[$userid]))).'?s=';
+			'://www.gravatar.com/avatar/'.md5(strtolower(trim($qa_cache_wp_user_emails[$post['userid']]))).'?s=';
 			$array['thumb'] = $url.'50';
 			$array['full'] = $url.'150';
 		}
