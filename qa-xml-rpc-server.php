@@ -69,15 +69,6 @@ class q2a_xmlrpc_server extends IXR_Server {
 			'q2a.getQuestions'				=> 'this:call_get_questions',
 			'q2a.getQuestion'				=> 'this:call_get_question',
 
-			// posting
-			'q2a.postQuestion'				=> 'this:call_post_question',
-			'q2a.postAnswer'				=> 'this:call_post_answer',
-			'q2a.postComment'				=> 'this:call_post_comment',
-
-			// voting
-			'q2a.voteQuestion'				=> 'this:call_vote_question',
-			'q2a.voteAnswer'				=> 'this:call_vote_answer',
-			'q2a.voteComment'				=> 'this:call_vote_comment',
 			
 		);
 	}
