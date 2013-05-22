@@ -38,6 +38,11 @@
 		
 		'no_items_found' => 'No items found.',
 		'x_items_found' => 'Retrieved ^ items.',
+		
+		'vote_error' => 'Error submitting vote.',
+		
+		'error' => 'Error processing request.',
+		'success' => 'Request processed successfully.',
 
 	);
 

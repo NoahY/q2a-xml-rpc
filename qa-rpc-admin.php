@@ -96,19 +96,32 @@ class qa_rpc_admin {
 	// Vote on items
 
 		$fields[] = array(
-			'label' => 'Vote on Questions',
-			'tags' => 'NAME="xml_rpc_bool_q_vote"',
-			'value' => qa_opt('xml_rpc_bool_q_vote'),
+			'label' => 'Upvote Questions',
+			'tags' => 'NAME="xml_rpc_bool_q_upvote"',
+			'value' => qa_opt('xml_rpc_bool_q_upvote'),
 			'type' => 'checkbox',
 		);
 
 		$fields[] = array(
-			'label' => 'Vote on Answers',
-			'tags' => 'NAME="xml_rpc_bool_a_vote"',
-			'value' => qa_opt('xml_rpc_bool_a_vote'),
+			'label' => 'Downvote Questions',
+			'tags' => 'NAME="xml_rpc_bool_q_downvote"',
+			'value' => qa_opt('xml_rpc_bool_q_downvote'),
 			'type' => 'checkbox',
 		);
 
+		$fields[] = array(
+			'label' => 'Upvote Answers',
+			'tags' => 'NAME="xml_rpc_bool_a_upvote"',
+			'value' => qa_opt('xml_rpc_bool_a_upvote'),
+			'type' => 'checkbox',
+		);
+
+		$fields[] = array(
+			'label' => 'Downvote Answers',
+			'tags' => 'NAME="xml_rpc_bool_a_downvote"',
+			'value' => qa_opt('xml_rpc_bool_a_downvote'),
+			'type' => 'checkbox',
+		);
 		return array(           
 			'ok' => ($ok && !isset($error)) ? $ok : null,
 				

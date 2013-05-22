@@ -135,117 +135,12 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$qarray = qa_db_select_with_pending(
 			qa_db_qs_selectspec($userid, $data['sort'], (int)$data['start'], mysql_real_escape_string($data['cats']), null, false, false, (int)$data['size'])
 		);
+		$usershtml=qa_userids_handles_html(qa_any_get_userids_handles($qarray));
 		
-		$cookieid=qa_cookie_get();
-
-		$options=qa_post_html_defaults('Q', @$data['full']);
-		if (isset($data['categorypathprefix']))
-			$options['categorypathprefix'] = $categorypathprefix;
-
-		$coptions=qa_post_html_defaults('C', true);
-
 		$questions = array();
 		
 		foreach($qarray as $questionid => $post) {
-			
-			if(@$data['full']) {
-				
-				@list($questionin, $childposts, $achildposts, $parentquestion, $closepost, $extravalue, $categories, $favorite)=qa_db_select_with_pending(
-					qa_db_full_post_selectspec($userid, $questionid),
-					qa_db_full_child_posts_selectspec($userid, $questionid),
-					qa_db_full_a_child_posts_selectspec($userid, $questionid),
-					qa_db_post_parent_q_selectspec($questionid),
-					qa_db_post_close_post_selectspec($questionid),
-					qa_db_post_meta_selectspec($questionid, 'qa_q_extra'),
-					qa_db_category_nav_selectspec($questionid, true, true, true),
-					isset($userid) ? qa_db_is_favorite_selectspec($userid, QA_ENTITY_QUESTION, $questionid) : null
-				);
-
-
-				$answers=array();
-				
-				foreach ($childposts as $postid => $post)
-					switch ($post['type']) {
-						case 'A':
-						case 'A_HIDDEN':
-						case 'A_QUEUED':
-							$answers[]=$post;
-							break;
-					}
-
-				
-				$commentsfollows=array();
-				
-				foreach ($childposts as $postid => $post)
-					switch ($post['type']) {
-						case 'Q': // never show follow-on Qs which have been hidden, even to admins
-						case 'C':
-						case 'C_HIDDEN':
-						case 'C_QUEUED':
-							$commentsfollows[$postid]=$post;
-							break;
-					}
-
-				foreach ($achildposts as $postid => $post)
-					switch ($post['type']) {
-						case 'Q': // never show follow-on Qs which have been hidden, even to admins
-						case 'C':
-						case 'C_HIDDEN':
-						case 'C_QUEUED':
-							$commentsfollows[$postid]=$post;
-							break;
-					}
-
-				$usershtml=qa_userids_handles_html(array_merge(array($questionin), $answers, $commentsfollows), true);
-				
-				$question = qa_post_html_fields($questionin, $userid, $cookieid, $usershtml, null, $options);
-				$question['avatar'] = $this->get_post_avatar($questionin);
-
-
-				foreach ($commentsfollows as $commentfollowid => $commentfollow)
-					if (($commentfollow['parentid']==$questionid) && $commentfollow['viewable'])
-						$qcomments[$commentfollowid]=$commentfollow;
-
-				$aoptions=qa_post_html_defaults('A', true);
-				$aoptions['isselected']=$answer['isselected'];
-				
-				foreach($answers as $idx => $answer) {
-					$answers[$idx]=qa_post_html_fields($answer, $userid, $cookieid, $usershtml, null, $aoptions);
-					
-					$answers[$idx]['avatar'] = $this->get_post_avatar($answer);
-					
-					$commentlist = array();
-					foreach ($commentsfollows as $commentfollowid => $commentfollow) {
-						
-						if (($commentfollow['parentid'] != $parentid) || !$commentfollow['viewable'])
-							continue;
-						
-						if ($commentfollow['basetype']=='C') {
-							$commentlist[$commentfollowid]=qa_post_html_fields($commentfollow, $userid, $cookieid, $usershtml, null, $coptions);
-
-						} elseif ($commentfollow['basetype']=='Q') {
-							
-							$commentlist[]=qa_post_html_fields($commentfollow, $userid, $cookieid, $usershtml, null, $options);
-						}
-					}
-
-					$answers[$idx]['comments'] = $commentlist;
-				}
-				
-				$question['answers'] = $answers;
-				$question['comments'] = $qcomments;
-				$question['parentquestion'] = $parentquestion;
-				$question['closepost'] = $closepost;
-				$question['extravalue'] = $extravalue;
-				$question['categories'] = $categories;
-				$question['favorite'] = $favorite;
-				
-			} 
-			else {
-				$usershtml=qa_userids_handles_html(qa_any_get_userids_handles($qarray));
-				$question = qa_any_to_q_html_fields($post, $userid, qa_cookie_get(), $usershtml, null, $options);
-			}
-			$question['username'] = $this->get_username($userid);
+			$question = $this->get_single_question($data, $post['postid']);
 			$questions[] = $question;
 			
 		}
@@ -265,7 +160,186 @@ class q2a_xmlrpc_server extends IXR_Server {
 	}
 
 
+	/**
+	 * Upvote Question
+	 *
+	 * @param array $args ($username, $password, $data['postid'])
+	 * @return array ();
+	 * 
+	 */
+	function call_vote_question( $args ) {
+		global $bp;
+
+		//check options if this is callable
+		$call = (array) maybe_unserialize( get_option( 'q2a_xmlrpc_enabled_calls' ) );
+		
+		// Parse the arguments, assuming they're in the correct order
+		$username = mysql_real_escape_string( $args[0] );
+		$password   = mysql_real_escape_string( $args[1] );
+		$data = @$args[2];
+
+		$vote = (int)$data['vote'];
+		
+		if ($vote > 0 && !qa_opt( 'xml_rpc_bool_q_upvote' ) )
+			return new IXR_Error( 405, qa_lang_sub('xmlrpc/x_is_disabled','q2a.upVoteQuestion' ));
+		if ($vote < 0 && !qa_opt( 'xml_rpc_bool_q_dwonvote' ) )
+			return new IXR_Error( 405, qa_lang_sub('xmlrpc/x_is_disabled','q2a.downVoteQuestion' ));
+
+
+		if ( !$this->login( $username, $password ) )
+			return $this->error;
+
+		$userid = qa_get_logged_in_userid();
+		$postid = $data['postid'];
+		$cookieid=qa_cookie_get();
+
+		$post=qa_db_select_with_pending(qa_db_full_post_selectspec($userid, $postid));
+
+		$voteerror=qa_vote_error_html($post, $vote, $userid, qa_request());
+		
+		if ($voteerror !== false)
+			return array(
+				'confirmation' => false,
+				'message' => qa_lang( 'xmlrpc/vote_error' ),
+			);
+		
+		qa_vote_set($post, $userid, qa_get_logged_in_handle(), $cookieid, $vote);
+		
+		$output = $this->decide_output($voteerror);
+		
+		$output['votes'] = qa_db_read_one_value(
+					qa_db_query_sub(
+						"SELECT netvotes FROM ^posts WHERE postid=#",
+						$postid
+						),
+					true
+				);
+		return $output;
+	}
+
 	// worker functions
+
+	function get_single_question($data, $questionid) {
+		$userid = qa_get_logged_in_userid();
+		$options=qa_post_html_defaults('Q', @$data['full']);
+		if (isset($data['categorypathprefix']))
+			$options['categorypathprefix'] = $categorypathprefix;
+
+		$cookieid=qa_cookie_get();
+			
+		if(@$data['full']) {
+			
+			$coptions=qa_post_html_defaults('C', true);
+
+			@list($questionin, $childposts, $achildposts, $parentquestion, $closepost, $extravalue, $categories, $favorite)=qa_db_select_with_pending(
+				qa_db_full_post_selectspec($userid, $questionid),
+				qa_db_full_child_posts_selectspec($userid, $questionid),
+				qa_db_full_a_child_posts_selectspec($userid, $questionid),
+				qa_db_post_parent_q_selectspec($questionid),
+				qa_db_post_close_post_selectspec($questionid),
+				qa_db_post_meta_selectspec($questionid, 'qa_q_extra'),
+				qa_db_category_nav_selectspec($questionid, true, true, true),
+				isset($userid) ? qa_db_is_favorite_selectspec($userid, QA_ENTITY_QUESTION, $questionid) : null
+			);
+
+
+			$answers=array();
+			
+			foreach ($childposts as $postid => $post)
+				switch ($post['type']) {
+					case 'A':
+					case 'A_HIDDEN':
+					case 'A_QUEUED':
+						$answers[]=$post;
+						break;
+				}
+
+			
+			$commentsfollows=array();
+			
+			foreach ($childposts as $postid => $post)
+				switch ($post['type']) {
+					case 'Q': // never show follow-on Qs which have been hidden, even to admins
+					case 'C':
+					case 'C_HIDDEN':
+					case 'C_QUEUED':
+						$commentsfollows[$postid]=$post;
+						break;
+				}
+
+			foreach ($achildposts as $postid => $post)
+				switch ($post['type']) {
+					case 'Q': // never show follow-on Qs which have been hidden, even to admins
+					case 'C':
+					case 'C_HIDDEN':
+					case 'C_QUEUED':
+						$commentsfollows[$postid]=$post;
+						break;
+				}
+
+			$usershtml=qa_userids_handles_html(array_merge(array($questionin), $answers, $commentsfollows), true);
+			
+			$question = qa_post_html_fields($questionin, $userid, $cookieid, $usershtml, null, $options);
+			$question['avatar'] = $this->get_post_avatar($questionin);
+
+
+			foreach ($commentsfollows as $commentfollowid => $commentfollow)
+				if (($commentfollow['parentid']==$questionid) && $commentfollow['viewable'])
+					$qcomments[$commentfollowid]=$commentfollow;
+
+			$aoptions=qa_post_html_defaults('A', true);
+			$aoptions['isselected']=$answer['isselected'];
+			
+			foreach($answers as $idx => $answer) {
+				$answers[$idx]=qa_post_html_fields($answer, $userid, $cookieid, $usershtml, null, $aoptions);
+				
+				$answers[$idx]['avatar'] = $this->get_post_avatar($answer);
+				
+				$commentlist = array();
+				foreach ($commentsfollows as $commentfollowid => $commentfollow) {
+					
+					if (($commentfollow['parentid'] != $parentid) || !$commentfollow['viewable'])
+						continue;
+					
+					if ($commentfollow['basetype']=='C') {
+						$commentlist[$commentfollowid]=qa_post_html_fields($commentfollow, $userid, $cookieid, $usershtml, null, $coptions);
+
+					} elseif ($commentfollow['basetype']=='Q') {
+						
+						$commentlist[]=qa_post_html_fields($commentfollow, $userid, $cookieid, $usershtml, null, $options);
+					}
+				}
+
+				$answers[$idx]['comments'] = $commentlist;
+			}
+			
+			$question['answers'] = $answers;
+			$question['comments'] = $qcomments;
+			$question['parentquestion'] = $parentquestion;
+			$question['closepost'] = $closepost;
+			$question['extravalue'] = $extravalue;
+			$question['categories'] = $categories;
+			$question['favorite'] = $favorite;
+			
+		} 
+		else {
+			$questionin = qa_db_select_with_pending(
+				qa_db_full_post_selectspec($userid, $questionid)
+			);
+			$usershtml=qa_userids_handles_html(array($questionin), true);
+			$question = qa_any_to_q_html_fields($questionin, $userid, qa_cookie_get(), $usershtml, null, $options);
+		}
+		$question['username'] = $this->get_username($userid);
+
+		return $question;
+	}
+
+	function decide_output($error = false) {
+		
+		$output['confirmation'] = $error;
+		$output['message'] = $error?qa_lang( 'xmlrpc/error' ):qa_lang( 'xmlrpc/success' );
+		return $output;
+	}
 
 	function get_post_avatar($post) {
 		if (QA_FINAL_EXTERNAL_USERS) {
