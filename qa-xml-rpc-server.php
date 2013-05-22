@@ -207,7 +207,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 					$a_view=qa_post_html_fields($answer, $userid, $cookieid, $usershtml, null, $aoptions);
 					
 					$commentlist = array();
-					foreach ($showcomments as $commentfollowid => $commentfollow) {
+					foreach ($commentsfollows as $commentfollowid => $commentfollow) {
 						
 						if (($commentfollow['parentid'] != $parentid) || !$commentfollow['viewable'])
 							continue;
