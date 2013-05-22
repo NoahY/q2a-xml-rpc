@@ -166,6 +166,9 @@ class q2a_xmlrpc_server extends IXR_Server {
 		else 
 			$output['message'] = qa_lang_sub( 'xmlrpc/x_items_found', count($questions) );
 		
+		if(isset($data['meta']))
+			$output['meta'] = $this->get_meta_data();
+		
 		$output['confirmation'] = true;
 		$output['data'] = $questions;
 
@@ -200,7 +203,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 			);
 
 
-			$answers=array();
+			$answers = array();
+			$allcomments = array();
 			
 			foreach ($childposts as $postid => $post)
 				switch ($post['type']) {
@@ -209,18 +213,11 @@ class q2a_xmlrpc_server extends IXR_Server {
 					case 'A_QUEUED':
 						$answers[]=$post;
 						break;
-				}
-
-			
-			$commentsfollows=array();
-			
-			foreach ($childposts as $postid => $post)
-				switch ($post['type']) {
 					case 'Q': // never show follow-on Qs which have been hidden, even to admins
 					case 'C':
 					case 'C_HIDDEN':
 					case 'C_QUEUED':
-						$commentsfollows[$postid]=$post;
+						$allcomments[] = $post;
 						break;
 				}
 
@@ -230,19 +227,19 @@ class q2a_xmlrpc_server extends IXR_Server {
 					case 'C':
 					case 'C_HIDDEN':
 					case 'C_QUEUED':
-						$commentsfollows[$postid]=$post;
+						$allcomments[] = $post;
 						break;
 				}
 
-			$usershtml=qa_userids_handles_html(array_merge(array($questionin), $answers, $commentsfollows), true);
+			$usershtml=qa_userids_handles_html(array_merge(array($questionin), $answers, $allcomments), true);
 			
 			$question = qa_post_html_fields($questionin, $userid, $cookieid, $usershtml, null, $options);
 			$question['avatar'] = $this->get_post_avatar($questionin);
 
 
-			foreach ($commentsfollows as $commentfollowid => $commentfollow)
-				if (($commentfollow['parentid']==$questionid) && $commentfollow['viewable'])
-					$qcomments[$commentfollowid]=$commentfollow;
+			foreach ($allcomments as $comment)
+				if (($comment['parentid'] == $questionid) && $comment['viewable'])
+					$qcomments[]=$comment;
 
 			$aoptions=qa_post_html_defaults('A', true);
 			$aoptions['isselected']=$answer['isselected'];
@@ -253,17 +250,17 @@ class q2a_xmlrpc_server extends IXR_Server {
 				$answers[$idx]['avatar'] = $this->get_post_avatar($answer);
 				
 				$commentlist = array();
-				foreach ($commentsfollows as $commentfollowid => $commentfollow) {
+				foreach ($allcomments as $comment) {
 					
-					if (($commentfollow['parentid'] != $parentid) || !$commentfollow['viewable'])
+					if (($comment['parentid'] != $parentid) || !$comment['viewable'])
 						continue;
 					
-					if ($commentfollow['basetype']=='C') {
-						$commentlist[$commentfollowid]=qa_post_html_fields($commentfollow, $userid, $cookieid, $usershtml, null, $coptions);
+					if ($comment['basetype']=='C') {
+						$commentlist[$commentid]=qa_post_html_fields($comment, $userid, $cookieid, $usershtml, null, $coptions);
 
-					} elseif ($commentfollow['basetype']=='Q') {
+					} elseif ($comment['basetype']=='Q') {
 						
-						$commentlist[]=qa_post_html_fields($commentfollow, $userid, $cookieid, $usershtml, null, $options);
+						$commentlist[]=qa_post_html_fields($comment, $userid, $cookieid, $usershtml, null, $options);
 					}
 				}
 
@@ -289,6 +286,12 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$question['username'] = $this->get_username($userid);
 
 		return $question;
+	}
+
+	function get_meta_data() {
+		$meta['options'] = $this->get_qa_opts();
+		$meta['user'] = $this->get_user_data();
+		return $meta;
 	}
 
 	function decide_output($error = false) {
@@ -489,15 +492,34 @@ class q2a_xmlrpc_server extends IXR_Server {
 		return false;
 	}
 
-	function get_username($userid = false) {
-		if(!$userid) {
-			return QA_FINAL_EXTERNAL_USERS
-				? qa_get_logged_in_user_cache()['publicusername']
-				: qa_get_logged_in_handle();
+	function get_user_data() {
+		$userid = qa_get_logged_in_userid();
+		$user = array();
+		$user['userid'] = $userid;
+		if(QA_FINAL_EXTERNAL_USERS) {
+			$obj = get_userdata( $userid );
+			$user['display_name'] = $obj->display_name;
+			$user['username'] = $obj->user_nicename;
 		}
 		else {
-		
+			$user['display_name'] = $obj->display_name;
+			$user['username'] = qa_get_logged_in_handle();
 		}
+		$user['level'] = qa_get_logged_in_level();
+	}
+
+	function get_qa_opts() {
+
+		$opts['get_questions'] = qa_opt('xml_rpc_bool_get_questions');
+		$opts['question'] = qa_opt('xml_rpc_bool_question');
+		$opts['answer'] = qa_opt('xml_rpc_bool_answer');
+		$opts['comment'] = qa_opt('xml_rpc_bool_comment');
+		$opts['q_upvote'] = qa_opt('xml_rpc_bool_q_upvote');
+		$opts['q_downvote'] = qa_opt('xml_rpc_bool_q_downvote');
+		$opts['a_upvote'] = qa_opt('xml_rpc_bool_a_upvote');
+		$opts['a_downvote'] = qa_opt('xml_rpc_bool_a_downvote');
+		
+		return $opts;
 	}
 }
 
