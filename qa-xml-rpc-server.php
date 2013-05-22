@@ -254,24 +254,26 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$aoptions=qa_post_html_defaults('A', true);
 			$aoptions['isselected']=$answer['isselected'];
 			
-			foreach($answers as $idx => $answer) {
-				
-				$answers[$idx]=qa_post_html_fields($answer, $userid, $cookieid, $usershtml, null, $aoptions);
-				
-				$answers[$idx]['avatar'] = $this->get_post_avatar($answer);
-
-				$answers[$idx]['username'] = $this->get_username($answer['userid']);
+			$outanswers = array();
+			foreach($answers as $answer) {
+				$answer = qa_post_html_fields($answer, $userid, $cookieid, $usershtml, null, $aoptions);
+				if(!$answer)
+					continue;
+				$answer['avatar'] = $this->get_post_avatar($answer['raw']);
+				$answer['username'] = $this->get_username($answer['raw']['userid']);
 				
 				$commentlist = array();
-				foreach ($allcomments as $idx => $comment)
+				foreach ($allcomments as $comment)
 					if ($comment['raw']['parentid'] == $answer['postid'])
 						$commentlist[] = $comment;
 
-				$answers[$idx]['comments'] = array_values($commentlist);
+				$answer['comments'] = $commentlist;
+				
+				$outanswers[] = $answer;
 			}
 			
-			$question['answers'] = array_values($answers);
-			$question['comments'] = array_values($qcomments);
+			$question['answers'] = $outanswers;
+			$question['comments'] = $qcomments;
 			$question['parentquestion'] = $parentquestion;
 			$question['closepost'] = $closepost;
 			$question['extravalue'] = $extravalue;
