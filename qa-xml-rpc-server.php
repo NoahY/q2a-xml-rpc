@@ -255,7 +255,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 				$commentlist = array();
 				foreach ($allcomments as $comment) {
 					
-					if (($comment['parentid'] != $parentid) || !$comment['viewable'])
+					if (($comment['parentid'] != $answer['postid']) || !$comment['viewable'])
 						continue;
 
 					$comment['username'] = $this->get_username($comment['userid']);
