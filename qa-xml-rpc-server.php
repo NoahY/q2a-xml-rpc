@@ -177,8 +177,6 @@ class q2a_xmlrpc_server extends IXR_Server {
 							break;
 					}
 				
-				$answers=qa_page_q_load_as($question, $childposts);
-
 				$commentsfollows=array();
 				
 				foreach ($childposts as $postid => $post)
