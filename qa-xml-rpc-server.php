@@ -199,7 +199,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 				$usershtml=qa_userids_handles_html(array_merge(array($question), $answers, $commentsfollows), true);
 				
 				$question = qa_post_html_fields($question, $userid, $cookieid, $usershtml, null, $options);
-				$question['avatar'] = $this->get_post_avatar($question);
+				$question['avatar'] = $this->get_post_avatar($question['raw']);
 
 
 				foreach ($commentsfollows as $commentfollowid => $commentfollow)
@@ -212,7 +212,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 				foreach($answers as $idx => $answer) {
 					$answers[$idx]=qa_post_html_fields($answer, $userid, $cookieid, $usershtml, null, $aoptions);
 					
-					$answers[$idx]['avatar'] = $this->get_post_avatar($answer);
+					$answers[$idx]['avatar'] = $this->get_post_avatar($answer['raw']);
 					
 					$commentlist = array();
 					foreach ($commentsfollows as $commentfollowid => $commentfollow) {
