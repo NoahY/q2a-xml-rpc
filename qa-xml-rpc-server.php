@@ -150,7 +150,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 			
 			if(@$data['full']) {
 				
-				@list($question, $childposts, $achildposts, $parentquestion, $closepost, $extravalue, $categories, $favorite)=qa_db_select_with_pending(
+				@list($questionin, $childposts, $achildposts, $parentquestion, $closepost, $extravalue, $categories, $favorite)=qa_db_select_with_pending(
 					qa_db_full_post_selectspec($userid, $questionid),
 					qa_db_full_child_posts_selectspec($userid, $questionid),
 					qa_db_full_a_child_posts_selectspec($userid, $questionid),
@@ -196,10 +196,10 @@ class q2a_xmlrpc_server extends IXR_Server {
 							break;
 					}
 
-				$usershtml=qa_userids_handles_html(array_merge(array($question), $answers, $commentsfollows), true);
+				$usershtml=qa_userids_handles_html(array_merge(array($questionin), $answers, $commentsfollows), true);
 				
-				$question = qa_post_html_fields($question, $userid, $cookieid, $usershtml, null, $options);
-				$question['avatar'] = $this->get_post_avatar($question['raw']);
+				$question = qa_post_html_fields($questionin, $userid, $cookieid, $usershtml, null, $options);
+				$question['avatar'] = $this->get_post_avatar($questionin);
 
 
 				foreach ($commentsfollows as $commentfollowid => $commentfollow)
@@ -212,7 +212,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 				foreach($answers as $idx => $answer) {
 					$answers[$idx]=qa_post_html_fields($answer, $userid, $cookieid, $usershtml, null, $aoptions);
 					
-					$answers[$idx]['avatar'] = $this->get_post_avatar($answer['raw']);
+					$answers[$idx]['avatar'] = $this->get_post_avatar($answer);
 					
 					$commentlist = array();
 					foreach ($commentsfollows as $commentfollowid => $commentfollow) {
