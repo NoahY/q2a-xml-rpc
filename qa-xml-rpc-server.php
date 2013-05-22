@@ -136,16 +136,13 @@ class q2a_xmlrpc_server extends IXR_Server {
 			qa_db_qs_selectspec($userid, $data['sort'], (int)$data['start'], mysql_real_escape_string($data['cats']), null, false, false, (int)$data['size'])
 		);
 		
-		$usershtml=qa_userids_handles_html(qa_any_get_userids_handles($qarray));
 		$cookieid=qa_cookie_get();
 
 		$options=qa_post_html_defaults('Q', @$data['full']);
 		if (isset($data['categorypathprefix']))
 			$options['categorypathprefix'] = $categorypathprefix;
-		$options['avatarsize']=qa_opt('avatar_q_page_q_size');
 
 		$coptions=qa_post_html_defaults('C', true);
-		$coptions['avatarsize']=qa_opt('avatar_q_page_c_size');
 
 		$questions = array();
 		
@@ -163,8 +160,11 @@ class q2a_xmlrpc_server extends IXR_Server {
 					qa_db_category_nav_selectspec($questionid, true, true, true),
 					isset($userid) ? qa_db_is_favorite_selectspec($userid, QA_ENTITY_QUESTION, $questionid) : null
 				);
+
+				$usershtml=qa_userids_handles_html(array_merge(array($question), $answers, $commentsfollows), true);
 				
 				$question = qa_post_html_fields($question, $userid, $cookieid, $usershtml, null, $options);
+				$question['avatar'] = $this->get_post_avatar($question);
 
 				$answers=array();
 				
@@ -173,7 +173,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 						case 'A':
 						case 'A_HIDDEN':
 						case 'A_QUEUED':
-							$answers[$postid]=$post;
+							$answers[]=$post;
 							break;
 					}
 				
@@ -199,12 +199,17 @@ class q2a_xmlrpc_server extends IXR_Server {
 							break;
 					}
 
+				foreach ($commentsfollows as $commentfollowid => $commentfollow)
+					if (($commentfollow['parentid']==$questionid) && $commentfollow['viewable'])
+						$qcomments[$commentfollowid]=$commentfollow;
+
 				$aoptions=qa_post_html_defaults('A', true);
 				$aoptions['isselected']=$answer['isselected'];
-				$aoptions['avatarsize']=qa_opt('avatar_q_page_a_size');
 				
 				foreach($answers as $idx => $answer) {
-					$a_view=qa_post_html_fields($answer, $userid, $cookieid, $usershtml, null, $aoptions);
+					$answers[$idx]=qa_post_html_fields($answer, $userid, $cookieid, $usershtml, null, $aoptions);
+					
+					$answers[$idx]['avatar'] = $this->get_post_avatar($answer);
 					
 					$commentlist = array();
 					foreach ($commentsfollows as $commentfollowid => $commentfollow) {
@@ -217,7 +222,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 						} elseif ($commentfollow['basetype']=='Q') {
 							
-							$commentlist[$commentfollowid]=qa_post_html_fields($commentfollow, $userid, $cookieid, $usershtml, null, $options);
+							$commentlist[]=qa_post_html_fields($commentfollow, $userid, $cookieid, $usershtml, null, $options);
 						}
 					}
 
@@ -225,6 +230,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 				}
 				
 				$question['answers'] = $answers;
+				$question['comments'] = $qcomments;
 				$question['parentquestion'] = $parentquestion;
 				$question['closepost'] = $closepost;
 				$question['extravalue'] = $extravalue;
@@ -232,9 +238,10 @@ class q2a_xmlrpc_server extends IXR_Server {
 				$question['favorite'] = $favorite;
 				
 			} 
-			else 
+			else {
+				$usershtml=qa_userids_handles_html(qa_any_get_userids_handles($qarray));
 				$question = qa_any_to_q_html_fields($post, $userid, qa_cookie_get(), $usershtml, null, $options);
-			
+			}
 			$question['username'] = $this->get_username($userid);
 			$questions[] = $question;
 			
