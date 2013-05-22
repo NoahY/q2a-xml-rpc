@@ -346,7 +346,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		if(!$userid) {
 			return QA_FINAL_EXTERNAL_USERS
 				? qa_get_logged_in_user_cache()['publicusername']
-				: qa_get_logged_in_handle()
+				: qa_get_logged_in_handle();
 		}
 		else {
 		
