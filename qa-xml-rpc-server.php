@@ -103,10 +103,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 		return array(
 			'confirmation' => true,
-			'message'	  => qa_lang_sub('xmlrpc/hello_x',QA_FINAL_EXTERNAL_USERS
-					? qa_get_logged_in_user_cache()['publicusername']
-					: qa_get_logged_in_handle()
-				),
+			'message'	  => qa_lang_sub('xmlrpc/hello_x',$this->get_name()),
 		);
 	}
 
@@ -136,7 +133,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$userid = qa_get_logged_in_userid();
 		
 		$qarray = qa_db_select_with_pending(
-			qa_db_qs_selectspec($userid, $data['sort'], (int)$data['start'], mysql_real_escape_string($data['cats']), null, false, (bool)$data['full'], (int)$data['size'])
+			qa_db_qs_selectspec($userid, $data['sort'], (int)$data['start'], mysql_real_escape_string($data['cats']), null, false, false, (int)$data['size'])
 		);
 		
 		$usershtml=qa_userids_handles_html(qa_any_get_userids_handles($qarray));
@@ -146,8 +143,35 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 		$questions = array();
 		
-		foreach($qarray as $id => $post) {
-			$questions[] = qa_any_to_q_html_fields($post, $userid, qa_cookie_get(), $usershtml, null, $options);
+		foreach($qarray as $questionid => $post) {
+			
+			if(@$data['full']) {
+				$cookieid=qa_cookie_get();
+				
+				@list($question, $childposts, $achildposts, $parentquestion, $closepost, $extravalue, $categories, $favorite)=qa_db_select_with_pending(
+					qa_db_full_post_selectspec($userid, $questionid),
+					qa_db_full_child_posts_selectspec($userid, $questionid),
+					qa_db_full_a_child_posts_selectspec($userid, $questionid),
+					qa_db_post_parent_q_selectspec($questionid),
+					qa_db_post_close_post_selectspec($questionid),
+					qa_db_post_meta_selectspec($questionid, 'qa_q_extra'),
+					qa_db_category_nav_selectspec($questionid, true, true, true),
+					isset($userid) ? qa_db_is_favorite_selectspec($userid, QA_ENTITY_QUESTION, $questionid) : null
+				);
+				$question['childposts'] = $childposts;
+				$question['achildposts'] = $achildposts;
+				$question['parentquestion'] = $parentquestion;
+				$question['closepost'] = $closepost;
+				$question['extravalue'] = $extravalue;
+				$question['categories'] = $categories;
+				$question['favorite'] = $favorite;
+			} 
+			else 
+				$question = qa_any_to_q_html_fields($post, $userid, qa_cookie_get(), $usershtml, null, $options);
+			
+			$question['username'] = $this->get_username($userid);
+			$questions[] = $question;
+			
 		}
 		
 		if(empty($questions))
@@ -163,6 +187,9 @@ class q2a_xmlrpc_server extends IXR_Server {
 		return $output;
 
 	}
+
+
+	// worker functions
 
 	function get_post_avatar($post) {
 		$array = array();
@@ -313,6 +340,17 @@ class q2a_xmlrpc_server extends IXR_Server {
 			return true;
 
 		return false;
+	}
+
+	function get_username($userid = false) {
+		if(!$userid) {
+			return QA_FINAL_EXTERNAL_USERS
+				? qa_get_logged_in_user_cache()['publicusername']
+				: qa_get_logged_in_handle()
+		}
+		else {
+		
+		}
 	}
 }
 
