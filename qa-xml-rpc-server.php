@@ -296,7 +296,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 						//	Load relevant information about this question and check it exists
 						
-							@list($question, $parent, $children)=qa_db_select_with_pending(
+							@list($question, $parent, $children, )=qa_db_select_with_pending(
 								qa_db_full_post_selectspec($userid, $questionid),
 								qa_db_full_post_selectspec($userid, $parentid),
 								qa_db_full_child_posts_selectspec($userid, $parentid)
@@ -309,8 +309,6 @@ class q2a_xmlrpc_server extends IXR_Server {
 							) {
 								
 
-							//	Try to create the new comment
-							
 								$errors=array();
 								
 								$filtermodules=qa_load_modules_with('filter', 'filter_comment');
@@ -323,7 +321,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 								if (empty($errors)) {
 									$testwords=implode(' ', qa_string_to_words($in['content']));
 									
-									foreach ($commentsfollows as $comment)
+									foreach ($children as $comment)
 										if (($comment['basetype']=='C') && ($comment['parentid']==$parentid) && !$comment['hidden'])
 											if (implode(' ', qa_string_to_words($comment['content'])) == $testwords)
 												$errors['content']=qa_lang_html('question/duplicate_content');
@@ -335,7 +333,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 									$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
 												
 									$commentid=qa_comment_create($userid, $handle, $cookieid, $in['content'], $in['format'], $in['text'], $in['notify'], $in['email'],
-										$question, $parent, $commentsfollows, $in['queued']);
+										$question, $parent, $children, $in['queued']);
 									
 									if (isset($commentid)) 
 										$output['action_success'] = true;
