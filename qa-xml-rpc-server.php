@@ -514,14 +514,14 @@ class q2a_xmlrpc_server extends IXR_Server {
 	}
 
 	function get_post_avatar($post) {
+		$size = 96;
+
 		if (QA_FINAL_EXTERNAL_USERS) {
 			if(!function_exists('get_option'))
 				return false;
 			
 			if ( ! get_option('show_avatars') )
 				return false;
-
-			$size = 96;
 
 			$safe_alt = '';
 
