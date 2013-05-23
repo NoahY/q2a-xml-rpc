@@ -423,7 +423,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 				
 				$acomments = array();
 				foreach ($allcomments as $comment)
-					if ($comment['raw']['parentid'] == $answer['raw'][['postid'])
+					if ($comment['raw']['parentid'] == $answer['raw']['postid'])
 						$acomments[] = $comment;
 
 				$answer['comments'] = $acomments;
