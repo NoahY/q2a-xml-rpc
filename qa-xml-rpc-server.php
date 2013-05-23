@@ -191,12 +191,25 @@ class q2a_xmlrpc_server extends IXR_Server {
 					require_once QA_INCLUDE_DIR.'qa-page-question-submit.php';
 					require_once QA_INCLUDE_DIR.'qa-util-sort.php';
 
+				//	Process input
+					
+					$in=array();
+					$in['title'] = $title; 
+					$in['content'] = $content; 
+					$in['format'] = $format?$format:""; 
+					$in['text'] = $content; 
+					$in['extra'] = null;
+					$in['tags'] = $tags;
+
+					$in['notify']=$notify ? true : false;
+					$in['email']=$email;
+					$in['queued']=qa_user_moderation_reason() ? true : false;
+
 					switch($type) {
 						case 'Q':
 							
 						//	Get some info we need from the database
 
-							$in=array();
 							$followpostid=$parentid;
 							
 							$in['categoryid']=$category;
@@ -212,19 +225,6 @@ class q2a_xmlrpc_server extends IXR_Server {
 							
 							if (@$followanswer['basetype']!='A')
 								$followanswer=null;
-								
-						//	Process input
-							
-							$in['title'] = $title; 
-							$in['content'] = $content; 
-							$in['format'] = $format?$format:""; 
-							$in['text'] = $content; 
-							$in['extra'] = null;
-							$in['tags'] = $tags;
-
-							$in['notify']=$notify ? true : false;
-							$in['email']=$email;
-							$in['queued']=qa_user_moderation_reason() ? true : false;
 								
 							$errors=array();
 							
@@ -260,7 +260,6 @@ class q2a_xmlrpc_server extends IXR_Server {
 							if ((@$question['basetype']=='Q') && !isset($question['closedbyid'])) {
 								$answers=qa_page_q_load_as($question, $childposts);
 
-								
 							//	Try to create the new answer
 							
 								$answerid=qa_page_q_add_a_submit($question, $answers, false, $in, $errors);
