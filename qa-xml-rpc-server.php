@@ -258,36 +258,37 @@ class q2a_xmlrpc_server extends IXR_Server {
 							if ((@$question['basetype']=='Q') && !isset($question['closedbyid'])) {
 								$answers=qa_page_q_load_as($question, $childposts);
 
-							//	Try to create the new answer
-							
-							$errors=array();
-							
-							$filtermodules=qa_load_modules_with('filter', 'filter_answer');
-							foreach ($filtermodules as $filtermodule) {
-								$oldin=$in;
-								$filtermodule->filter_answer($in, $errors, $question, null);
-								qa_update_post_text($in, $oldin);
-							}
-							
-							if (empty($errors)) {
-								$testwords=implode(' ', qa_string_to_words($in['content']));
+								//	Try to create the new answer
 								
-								foreach ($answers as $answer)
-									if (!$answer['hidden'])
-										if (implode(' ', qa_string_to_words($answer['content'])) == $testwords)
-											$errors['content']=qa_lang_html('question/duplicate_content');
-							}
-							
-							if (empty($errors)) {
-								$userid=qa_get_logged_in_userid();
-								$handle=qa_get_logged_in_handle();
-								$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
+								$errors=array();
 								
-								$answerid=qa_answer_create($userid, $handle, $cookieid, $in['content'], $in['format'], $in['text'], $in['notify'], $in['email'],
-									$question, $in['queued']);
+								$filtermodules=qa_load_modules_with('filter', 'filter_answer');
+								foreach ($filtermodules as $filtermodule) {
+									$oldin=$in;
+									$filtermodule->filter_answer($in, $errors, $question, null);
+									qa_update_post_text($in, $oldin);
+								}
 								
-								if (isset($answerid))
-									$output['action_success'] = true;
+								if (empty($errors)) {
+									$testwords=implode(' ', qa_string_to_words($in['content']));
+									
+									foreach ($answers as $answer)
+										if (!$answer['hidden'])
+											if (implode(' ', qa_string_to_words($answer['content'])) == $testwords)
+												$errors['content']=qa_lang_html('question/duplicate_content');
+								}
+								
+								if (empty($errors)) {
+									$userid=qa_get_logged_in_userid();
+									$handle=qa_get_logged_in_handle();
+									$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
+									
+									$answerid=qa_answer_create($userid, $handle, $cookieid, $in['content'], $in['format'], $in['text'], $in['notify'], $in['email'],
+										$question, $in['queued']);
+									
+									if (isset($answerid))
+										$output['action_success'] = true;
+								}
 							}
 
 							break;
@@ -306,38 +307,39 @@ class q2a_xmlrpc_server extends IXR_Server {
 								(@$question['basetype']=='Q') &&
 								((@$parent['basetype']=='Q') || (@$parent['basetype']=='A'))
 							) {
-							
+								
 
-						//	Try to create the new comment
-						
-							$errors=array();
+							//	Try to create the new comment
 							
-							$filtermodules=qa_load_modules_with('filter', 'filter_comment');
-							foreach ($filtermodules as $filtermodule) {
-								$oldin=$in;
-								$filtermodule->filter_comment($in, $errors, $question, $parent, null);
-								qa_update_post_text($in, $oldin);
-							}
-							
-							if (empty($errors)) {
-								$testwords=implode(' ', qa_string_to_words($in['content']));
+								$errors=array();
 								
-								foreach ($commentsfollows as $comment)
-									if (($comment['basetype']=='C') && ($comment['parentid']==$parentid) && !$comment['hidden'])
-										if (implode(' ', qa_string_to_words($comment['content'])) == $testwords)
-											$errors['content']=qa_lang_html('question/duplicate_content');
-							}
-							
-							if (empty($errors)) {
-								$userid=qa_get_logged_in_userid();
-								$handle=qa_get_logged_in_handle();
-								$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
-											
-								$commentid=qa_comment_create($userid, $handle, $cookieid, $in['content'], $in['format'], $in['text'], $in['notify'], $in['email'],
-									$question, $parent, $commentsfollows, $in['queued']);
+								$filtermodules=qa_load_modules_with('filter', 'filter_comment');
+								foreach ($filtermodules as $filtermodule) {
+									$oldin=$in;
+									$filtermodule->filter_comment($in, $errors, $question, $parent, null);
+									qa_update_post_text($in, $oldin);
+								}
 								
-								if (isset($commentid)) 
-									$output['action_success'] = true;
+								if (empty($errors)) {
+									$testwords=implode(' ', qa_string_to_words($in['content']));
+									
+									foreach ($commentsfollows as $comment)
+										if (($comment['basetype']=='C') && ($comment['parentid']==$parentid) && !$comment['hidden'])
+											if (implode(' ', qa_string_to_words($comment['content'])) == $testwords)
+												$errors['content']=qa_lang_html('question/duplicate_content');
+								}
+								
+								if (empty($errors)) {
+									$userid=qa_get_logged_in_userid();
+									$handle=qa_get_logged_in_handle();
+									$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
+												
+									$commentid=qa_comment_create($userid, $handle, $cookieid, $in['content'], $in['format'], $in['text'], $in['notify'], $in['email'],
+										$question, $parent, $commentsfollows, $in['queued']);
+									
+									if (isset($commentid)) 
+										$output['action_success'] = true;
+								}
 							}
 
 							break;
