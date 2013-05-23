@@ -545,7 +545,6 @@ class q2a_xmlrpc_server extends IXR_Server {
 	 */
 
 	function login( $username, $password, $remember = false ) {
-		require_once QA_INCLUDE_DIR.'qa-app-user.php';
 		
 		if ( !qa_opt( 'xml_rpc_bool_active' ) ) {
 			$this->error = new IXR_Error( 405, qa_lang('xmlrpc/plugin_disabled' ) );
@@ -554,14 +553,9 @@ class q2a_xmlrpc_server extends IXR_Server {
 		
 
 		if (QA_FINAL_EXTERNAL_USERS)
-			$this->wp_login( $username, $password );
+			$user = $this->wp_login( $username, $password );
 		else
-			$this->core_login( $username, $password );
-		
-		global $qa_cached_logged_in_user;
-
-		$user=qa_get_logged_in_user();
-		$qa_cached_logged_in_user=isset($user) ? $user : false; // to save trying again                       
+			$user = $this->core_login( $username, $password );
 		
 		if(!$user)
 			return false;
@@ -631,6 +625,11 @@ class q2a_xmlrpc_server extends IXR_Server {
 		}
 
 		wp_set_current_user( $user->ID );
+
+		global $qa_cached_logged_in_user;
+
+		$user=qa_get_logged_in_user();
+		$qa_cached_logged_in_user=isset($user) ? $user : false; // to save trying again                       
 
 		return $user;
 	}
