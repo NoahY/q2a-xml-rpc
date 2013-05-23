@@ -1,18 +1,18 @@
 =================================
-Question2Answer Merge
+Question2Answer XML-RPC Server
 =================================
 -----------
 Description
 -----------
-This is a plugin for **Question2Answer** that allows admin to merge questions.
+This is a plugin for **Question2Answer** that allows access via XML-RPC.
 
 --------
 Features
 --------
-- moves comments and answers from one question to another, then deletes the first question
-- shows merge dialog on duplicate questions
-- ajax call to show which posts are affected
-- store redirect info for deleted questions in postmeta
+- view questions stream
+- view individual questions
+- vote on questions and answers
+- post questions, answers, and comments
 
 ------------
 Installation
@@ -21,16 +21,16 @@ Installation
 #. Get the source code for this plugin from github_, either using git_, or downloading directly:
 
    - To download using git, install git and then type 
-     ``git clone git://github.com/NoahY/q2a-post-merge.git merge``
+     ``git clone git://github.com/NoahY/q2a-xml-rpc.git xml-rpc``
      at the command prompt (on Linux, Windows is a bit different)
    - To download directly, go to the `project page`_ and click **Download**
 
-#. navigate to your site, go to **Admin -> Plugins** on your q2a install and find the Merge section.
+#. navigate to your site, go to **Admin -> Plugins** on your q2a install and find the XML-RPC section.
 
 .. _Question2Answer: http://www.question2answer.org/install.php
 .. _git: http://git-scm.com/
 .. _github:
-.. _project page: https://github.com/NoahY/q2a-merge
+.. _project page: https://github.com/NoahY/q2a-xml-rpc
 
 ----------
 Disclaimer
