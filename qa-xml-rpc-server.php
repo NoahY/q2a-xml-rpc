@@ -545,7 +545,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 	 */
 
 	function login( $username, $password, $remember = false ) {
-
+		require_once QA_INCLUDE_DIR.'qa-app-user.php';
+		
 		if ( !qa_opt( 'xml_rpc_bool_active' ) ) {
 			$this->error = new IXR_Error( 405, qa_lang('xmlrpc/plugin_disabled' ) );
 			return false;
