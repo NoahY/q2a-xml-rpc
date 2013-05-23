@@ -5,7 +5,7 @@
 	Plugin URI: https://github.com/NoahY/q2a-xml-rpc
 	Plugin Update Check URI: https://raw.github.com/NoahY/q2a-xml-rpc/master/qa-plugin.php
 	Plugin Description: Provides xml-rpc capabilities
-	Plugin Version: 0.1
+	Plugin Version: 0.2
 	Plugin Date: 2013-05-21
 	Plugin Author: NoahY
 	Plugin Author URI: http://www.question2answer.org/qa/user/NoahY

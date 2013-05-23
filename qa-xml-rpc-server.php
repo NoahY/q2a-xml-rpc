@@ -147,7 +147,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 					break;
 				case 'post':
-					$questionid = (int)$data['action_id'];
+					$questionid = (int)@$data['action_id'];
 
 					$input = $data['action_data'];
 
