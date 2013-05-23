@@ -632,7 +632,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 			require_once QA_INCLUDE_DIR.'qa-db-users.php';
 			require_once QA_INCLUDE_DIR.'qa-db-selects.php';
 		
-			qa_limits_increment(null, QA_LIMIT_LOGINS);
+			//qa_limits_increment(null, QA_LIMIT_LOGINS); // This causes problems...
 
 			$errors=array();
 			
