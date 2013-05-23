@@ -108,8 +108,6 @@ class q2a_xmlrpc_server extends IXR_Server {
 	function call_get_questions( $args ) {
 		global $bp;
 
-		//check options if this is callable
-		$call = (array) maybe_unserialize( get_option( 'q2a_xmlrpc_enabled_calls' ) );
 		if ( !qa_opt( 'xml_rpc_bool_get_questions' ) )
 			return new IXR_Error( 405, qa_lang_sub('xmlrpc/x_is_disabled','q2a.getQuestions' ));
 
