@@ -101,7 +101,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 	/**
 	 * Get Question List.
 	 *
-	 * @param array $args ($username, $password, $data['sort', 'start', 'cats', 'full', 'size'])
+	 * @param array $args ($username, $password, $data['sort', 'start', 'cats', 'full', 'size', 'action', 'action_id', 'action_data'])
 	 * @return array (questions);
 	 * 
 	 */
@@ -122,24 +122,184 @@ class q2a_xmlrpc_server extends IXR_Server {
 			return $this->error;
 
 		$userid = qa_get_logged_in_userid();
-		$cookieid=qa_cookie_get();
-
+		$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
+		$output = array();
+		
 		if(isset($data['action'])) {
+			$output['action_success'] = false;
 			switch($data['action']) {
 				case 'vote':
 					require_once QA_INCLUDE_DIR.'qa-app-votes.php';
 					$postid = (int)$data['action_id'];
-					$vote = (int)$data['vote'];
+					$info = $data['action_data'];
+					$vote = (int)$info['vote'];
+					$type = $info['type'];
 					
-					if (($vote > 0 && !qa_opt( 'xml_rpc_bool_q_upvote' ) ) || ($vote < 0 && !qa_opt( 'xml_rpc_bool_q_dwonvote' ) ))
+					if (($type == 'Q' && $vote > 0 && !qa_opt( 'xml_rpc_bool_q_upvote' ) ) || ($type == 'Q' && $vote < 0 && !qa_opt( 'xml_rpc_bool_q_dwonvote' ) ) || ($type == 'A' && $vote > 0 && !qa_opt( 'xml_rpc_bool_a_upvote' ) ) || ($type == 'A' && $vote < 0 && !qa_opt( 'xml_rpc_bool_a_dwonvote' ) ))
 						break;
 						
 					$post=qa_db_select_with_pending(qa_db_full_post_selectspec($userid, $postid));
 
 					$voteerror=qa_vote_error_html($post, $vote, $userid, qa_request());
 					
-					if ($voteerror === false)
+					if ($voteerror === false) {
 						qa_vote_set($post, $userid, qa_get_logged_in_handle(), $cookieid, $vote);
+						$output['action_success'] = true;
+					}
+
+					break;
+				case 'post':
+					$questionid = (int)$data['action_id'];
+
+					$input = $data['action_data'];
+
+					$type = $input['type'];
+					$title = @$input['title'];
+					$content = @$input['content'];
+					$format = @$input['format'];
+					$tags = @$input['tags'];
+					$category = @$input['category'];
+					$notify = @$input['notify'];
+					$email = @$input['email'];
+					$parentid = @$input['parentid'];
+					
+					require_once QA_INCLUDE_DIR.'qa-app-users.php';
+					require_once QA_INCLUDE_DIR.'qa-app-limits.php';
+
+				//	First check whether the person has permission to do this
+					switch($type) {
+						case 'Q':
+							if(!qa_opt( 'xml_rpc_bool_question') || qa_user_permit_error('permit_post_q'))
+								break 2;
+							break;
+						case 'A':
+							if(!qa_opt( 'xml_rpc_bool_answer') || qa_user_permit_error('permit_post_a', QA_LIMIT_ANSWERS))
+								break 2;
+							break;
+						case 'C':
+							if(!qa_opt( 'xml_rpc_bool_comment') || qa_user_permit_error('permit_post_c', QA_LIMIT_COMMENTS))
+								break 2;
+							break;
+					}
+
+					require_once QA_INCLUDE_DIR.'qa-app-post-create.php';
+					require_once QA_INCLUDE_DIR.'qa-util-string.php';
+					require_once QA_INCLUDE_DIR.'qa-db-selects.php';
+					require_once QA_INCLUDE_DIR.'qa-app-format.php';
+					require_once QA_INCLUDE_DIR.'qa-app-post-create.php';
+					require_once QA_INCLUDE_DIR.'qa-page-question-view.php';
+					require_once QA_INCLUDE_DIR.'qa-page-question-submit.php';
+					require_once QA_INCLUDE_DIR.'qa-util-sort.php';
+
+					switch($type) {
+						case 'Q':
+							
+						//	Get some info we need from the database
+
+							$in=array();
+							$followpostid=$parentid;
+							
+							$in['categoryid']=$category;
+							
+							@list($categories, $followanswer, $completetags)=qa_db_select_with_pending(
+								qa_db_category_nav_selectspec($in['categoryid'], true),
+								isset($followpostid) ? qa_db_full_post_selectspec($userid, $followpostid) : null,
+								qa_db_popular_tags_selectspec(0, QA_DB_RETRIEVE_COMPLETE_TAGS)
+							);
+							
+							if (!isset($categories[$in['categoryid']]))
+								$in['categoryid']=null;
+							
+							if (@$followanswer['basetype']!='A')
+								$followanswer=null;
+								
+						//	Process input
+							
+							$in['title'] = $title; 
+							$in['content'] = $content; 
+							$in['format'] = $format?$format:""; 
+							$in['text'] = $content; 
+							$in['extra'] = null;
+							$in['tags'] = $tags;
+
+							$in['notify']=$notify ? true : false;
+							$in['email']=$email;
+							$in['queued']=qa_user_moderation_reason() ? true : false;
+								
+							$errors=array();
+							
+							$filtermodules=qa_load_modules_with('filter', 'filter_question');
+							foreach ($filtermodules as $filtermodule) {
+								$oldin=$in;
+								$filtermodule->filter_question($in, $errors, null);
+								qa_update_post_text($in, $oldin);
+							}
+							
+							if (qa_using_categories() && count($categories) && (!qa_opt('allow_no_category')) && !isset($in['categoryid']))
+								$errors['categoryid']=qa_lang_html('question/category_required'); // check this here because we need to know count($categories)
+							
+							
+							if (empty($errors)) {
+								
+								$questionid=qa_question_create($followanswer, $userid, qa_get_logged_in_handle(), $cookieid,
+									$in['title'], $in['content'], $in['format'], $in['text'], qa_tags_to_tagstring($in['tags']),
+									$in['notify'], $in['email'], $in['categoryid'], $in['extra'], $in['queued']);
+								
+								if (isset($questionid))
+									$output['action_success'] = true;
+							}
+							break;
+						case 'A':
+						//	Load relevant information about this question and check it exists
+						
+							list($question, $childposts)=qa_db_select_with_pending(
+								qa_db_full_post_selectspec($userid, $questionid),
+								qa_db_full_child_posts_selectspec($userid, $questionid)
+							);
+							
+							if ((@$question['basetype']=='Q') && !isset($question['closedbyid'])) {
+								$answers=qa_page_q_load_as($question, $childposts);
+
+								
+							//	Try to create the new answer
+							
+								$answerid=qa_page_q_add_a_submit($question, $answers, false, $in, $errors);
+								
+								if (isset($answerid))
+									$output['action_success'] = true;
+							}
+
+							break;
+						case 'C':
+
+						//	Load relevant information about this question and check it exists
+						
+							@list($question, $parent, $children)=qa_db_select_with_pending(
+								qa_db_full_post_selectspec($userid, $questionid),
+								qa_db_full_post_selectspec($userid, $parentid),
+								qa_db_full_child_posts_selectspec($userid, $parentid)
+							);
+							
+							
+							if (
+								(@$question['basetype']=='Q') &&
+								((@$parent['basetype']=='Q') || (@$parent['basetype']=='A'))
+							) {
+							
+
+							//	Try to create the new comment
+							
+								$commentid=qa_page_q_add_c_submit($question, $parent, $children, false, $in, $errors);
+								
+								if (isset($commentid)) 
+									$output['action_success'] = true;
+							}
+
+							break;
+					}
+					break;
+
+					
 			}
 		}
 
@@ -264,7 +424,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 				
 				$acomments = array();
 				foreach ($allcomments as $comment)
-					if ($comment['raw']['parentid'] == $answer['postid'])
+					if ($comment['raw']['parentid'] == $answer['raw'][['postid'])
 						$acomments[] = $comment;
 
 				$answer['comments'] = $acomments;
