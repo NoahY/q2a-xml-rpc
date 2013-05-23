@@ -302,7 +302,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 		
 		$qarray = qa_db_select_with_pending(
-			qa_db_qs_selectspec($userid, $data['sort'], (int)$data['start'], mysql_real_escape_string($data['cats']), null, false, false, (int)$data['size'])
+			qa_db_qs_selectspec($userid, $data['sort'], (int)$data['start'], mysql_real_escape_string(@$data['cats']), null, false, false, (int)$data['size'])
 		);
 		$usershtml=qa_userids_handles_html(qa_any_get_userids_handles($qarray));
 		
@@ -409,10 +409,10 @@ class q2a_xmlrpc_server extends IXR_Server {
 			}
 
 			$aoptions=qa_post_html_defaults('A', true);
-			$aoptions['isselected']=$answer['isselected'];
 			
 			$outanswers = array();
 			foreach($answers as $answer) {
+				$aoptions['isselected']=$answer['isselected'];
 				$answer = qa_post_html_fields($answer, $userid, $cookieid, $usershtml, null, $aoptions);
 				if(!$answer)
 					continue;
@@ -529,7 +529,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 			if (qa_opt('avatar_allow_gravatar') && isset($post['email']) && (@$post['flags'] & QA_USER_FLAGS_SHOW_GRAVATAR)) 
 				return (qa_is_https_probably() ? 'https' : 'http').
 					'://www.gravatar.com/avatar/'.md5(strtolower(trim($post['email']))).'?s='.$size;
-			elseif (qa_opt('avatar_allow_upload') && (($flags & QA_USER_FLAGS_SHOW_AVATAR)) && isset($post['avatarblobid']) && strlen($post['avatarblobid']))
+			elseif (qa_opt('avatar_allow_upload') && ((@$post['flags'] & QA_USER_FLAGS_SHOW_AVATAR)) && isset($post['avatarblobid']) && strlen($post['avatarblobid']))
 				return qa_path_html('image', array('qa_blobid' => $post['avatarblobid'], 'qa_size' => $size), null, QA_URL_FORMAT_PARAMS);
 			elseif ( (qa_opt('avatar_allow_gravatar')||qa_opt('avatar_allow_upload')) && qa_opt('avatar_default_show') && strlen(qa_opt('avatar_default_blobid')) )
 				return qa_path_html('image', array('qa_blobid' => qa_opt('avatar_default_blobid'), 'qa_size' => $size), null, QA_URL_FORMAT_PARAMS);
