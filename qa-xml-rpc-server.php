@@ -260,7 +260,31 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 							//	Try to create the new answer
 							
-								$answerid=qa_page_q_add_a_submit($question, $answers, false, $in, $errors);
+							$errors=array();
+							
+							$filtermodules=qa_load_modules_with('filter', 'filter_answer');
+							foreach ($filtermodules as $filtermodule) {
+								$oldin=$in;
+								$filtermodule->filter_answer($in, $errors, $question, null);
+								qa_update_post_text($in, $oldin);
+							}
+							
+							if (empty($errors)) {
+								$testwords=implode(' ', qa_string_to_words($in['content']));
+								
+								foreach ($answers as $answer)
+									if (!$answer['hidden'])
+										if (implode(' ', qa_string_to_words($answer['content'])) == $testwords)
+											$errors['content']=qa_lang_html('question/duplicate_content');
+							}
+							
+							if (empty($errors)) {
+								$userid=qa_get_logged_in_userid();
+								$handle=qa_get_logged_in_handle();
+								$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
+								
+								$answerid=qa_answer_create($userid, $handle, $cookieid, $in['content'], $in['format'], $in['text'], $in['notify'], $in['email'],
+									$question, $in['queued']);
 								
 								if (isset($answerid))
 									$output['action_success'] = true;
@@ -284,9 +308,33 @@ class q2a_xmlrpc_server extends IXR_Server {
 							) {
 							
 
-							//	Try to create the new comment
+						//	Try to create the new comment
+						
+							$errors=array();
 							
-								$commentid=qa_page_q_add_c_submit($question, $parent, $children, false, $in, $errors);
+							$filtermodules=qa_load_modules_with('filter', 'filter_comment');
+							foreach ($filtermodules as $filtermodule) {
+								$oldin=$in;
+								$filtermodule->filter_comment($in, $errors, $question, $parent, null);
+								qa_update_post_text($in, $oldin);
+							}
+							
+							if (empty($errors)) {
+								$testwords=implode(' ', qa_string_to_words($in['content']));
+								
+								foreach ($commentsfollows as $comment)
+									if (($comment['basetype']=='C') && ($comment['parentid']==$parentid) && !$comment['hidden'])
+										if (implode(' ', qa_string_to_words($comment['content'])) == $testwords)
+											$errors['content']=qa_lang_html('question/duplicate_content');
+							}
+							
+							if (empty($errors)) {
+								$userid=qa_get_logged_in_userid();
+								$handle=qa_get_logged_in_handle();
+								$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
+											
+								$commentid=qa_comment_create($userid, $handle, $cookieid, $in['content'], $in['format'], $in['text'], $in['notify'], $in['email'],
+									$question, $parent, $commentsfollows, $in['queued']);
 								
 								if (isset($commentid)) 
 									$output['action_success'] = true;
@@ -412,7 +460,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 			
 			$outanswers = array();
 			foreach($answers as $answer) {
-				$aoptions['isselected']=$answer['isselected'];
+				$aoptions['isselected']=@$answer['isselected'];
 				$answer = qa_post_html_fields($answer, $userid, $cookieid, $usershtml, null, $aoptions);
 				if(!$answer)
 					continue;
