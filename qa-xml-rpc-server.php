@@ -155,6 +155,12 @@ class q2a_xmlrpc_server extends IXR_Server {
 				case 'post':
 					$output['action_success'] = $this->do_post($data);
 					break;
+				case 'favorite':
+					$output['action_success'] = $this->do_favorite($data);
+					break;
+				case 'select':
+					$output['action_success'] = $this->do_select($data);
+					break;
 			}
 		}
 
@@ -373,32 +379,9 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$question = qa_any_to_q_html_fields($questionin, $userid, qa_cookie_get(), $usershtml, null, $options);
 		}
 		$question['username'] = $this->get_username($userid);
-
+		$question['favorite'] = qa_db_select_with_pending(qa_db_is_favorite_selectspec($userid, QA_ENTITY_QUESTION, $questionid));
+		
 		return $question;
-	}
-	
-	function do_vote($data) {
-		require_once QA_INCLUDE_DIR.'qa-app-votes.php';
-		$postid = (int)@$data['action_id'];
-		$info = @$data['action_data'];
-		$vote = (int)@$info['vote'];
-		$type = @$info['type'];
-
-		$userid = qa_get_logged_in_userid();
-		$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
-		
-		if($postid === null || $vote === null || $type === null)
-			return false;
-		
-		$post=qa_db_select_with_pending(qa_db_full_post_selectspec($userid, $postid));
-
-		$voteerror=qa_vote_error_html($post, $vote, $userid, qa_request());
-		
-		if ($voteerror === false) {
-			qa_vote_set($post, $userid, qa_get_logged_in_handle(), $cookieid, $vote);
-			return true;
-		}
-		return false;
 	}
 	
 	function do_post($data) {
@@ -603,7 +586,88 @@ class q2a_xmlrpc_server extends IXR_Server {
 		}
 		return false;
 	}
+
+	function do_vote($data) {
+		require_once QA_INCLUDE_DIR.'qa-app-votes.php';
+		$postid = (int)@$data['action_id'];
+		$info = @$data['action_data'];
+		$vote = (int)@$info['vote'];
+		$type = @$info['type'];
+
+		$userid = qa_get_logged_in_userid();
+		$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
+		
+		if($postid === null || $vote === null || $type === null)
+			return false;
+		
+		$post=qa_db_select_with_pending(qa_db_full_post_selectspec($userid, $postid));
+
+		$voteerror=qa_vote_error_html($post, $vote, $userid, qa_request());
+		
+		if ($voteerror === false) {
+			qa_vote_set($post, $userid, qa_get_logged_in_handle(), $cookieid, $vote);
+			return true;
+		}
+		return false;
+	}
+
 	
+	function do_favorite($data) {
+		require_once QA_INCLUDE_DIR.'qa-app-votes.php';
+		$postid = (int)@$data['action_id'];
+		$info = @$data['action_data'];
+		$vote = (int)@$info['vote'];
+		$type = @$info['type'];
+
+		$userid = qa_get_logged_in_userid();
+		$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
+		
+		if($postid === null || $vote === null || $type === null)
+			return false;
+		
+		$post=qa_db_select_with_pending(qa_db_full_post_selectspec($userid, $postid));
+
+		$voteerror=qa_vote_error_html($post, $vote, $userid, qa_request());
+		
+		if ($voteerror === false) {
+			qa_vote_set($post, $userid, qa_get_logged_in_handle(), $cookieid, $vote);
+			return true;
+		}
+		return false;
+	}
+	
+	function do_select($data) {
+		$questionid = (int)@$data['action_id'];
+		$answerid = @$data['action_data'];
+
+		if($questionid === null)
+			return false;
+
+		$userid = qa_get_logged_in_userid();
+		
+		qa_post_set_selchildid($questionid, $answerid, $userid);
+
+		return true;
+	}
+	
+	function do_favorite($data) {
+		$postid = (int)@$data['action_id'];
+		$info = @$data['action_data'];
+		$favorite = isset($info['favorite']);
+		$type = @$info['type'];
+
+		if($postid === null || $type === null)
+			return false;
+
+		$userid = qa_get_logged_in_userid();
+		$handle = qa_get_logged_in_handle();
+		$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
+		
+		qa_user_favorite_set($userid, $handle, $cookieid, $type, $postid, $favorite);
+
+		return true;
+	}
+		
 	function get_meta_data() {
 		$meta['options'] = $this->get_qa_opts();
 		$meta['user'] = $this->get_user_data();
