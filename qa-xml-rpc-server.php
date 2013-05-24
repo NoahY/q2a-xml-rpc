@@ -374,7 +374,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$question['username'] = $this->get_username($userid);
 		$question['favorite'] = qa_db_read_one_value(
 			qa_db_query_sub(
-				"SELECT COUNT(*) FROM ^userfavorites WHERE userid=# AND entitytype=$ AND entityid=#",
+				"SELECT entityid FROM ^userfavorites WHERE userid=# AND entitytype=$ AND entityid=#",
 				$userid, QA_ENTITY_QUESTION, $questionid
 			),
 			true
