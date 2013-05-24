@@ -101,6 +101,13 @@ class qa_rpc_admin {
 			'value' => qa_opt('xml_rpc_bool_q_upvote'),
 			'type' => 'checkbox',
 		);
+		
+		$fields[] = array(
+			'label' => 'Unvote Questions',
+			'tags' => 'NAME="xml_rpc_bool_q_unvote"',
+			'value' => qa_opt('xml_rpc_bool_q_unvote'),
+			'type' => 'checkbox',
+		);
 
 		$fields[] = array(
 			'label' => 'Downvote Questions',
@@ -113,6 +120,13 @@ class qa_rpc_admin {
 			'label' => 'Upvote Answers',
 			'tags' => 'NAME="xml_rpc_bool_a_upvote"',
 			'value' => qa_opt('xml_rpc_bool_a_upvote'),
+			'type' => 'checkbox',
+		);
+		
+		$fields[] = array(
+			'label' => 'Unvote Answers',
+			'tags' => 'NAME="xml_rpc_bool_a_unvote"',
+			'value' => qa_opt('xml_rpc_bool_a_unvote'),
 			'type' => 'checkbox',
 		);
 

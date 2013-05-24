@@ -25,20 +25,29 @@
 */
 
 	return array(
-		'x_is_disabled' => 'XML-RPC call ^ is disabled.',
-		'plugin_disabled' => 'XML-RPC services disabled on this site.',
-		'level_disabled' => 'XML-RPC services disabled on this user capability.',
-		'user_disabled' => 'XML-RPC services not enabled for this user.',
+		'incorrect_user_pass' => 'Incorrect username or password.',
+		'plugin_disabled' => 'XML-RPC services are disabled on this site.',
+		'level_disabled' => 'XML-RPC services are disabled for this user level.',
+		'user_disabled' => 'XML-RPC services are not enabled for this user.',
+		
+		'x_is_disabled' => '^ is disabled on this site.',
+		'getting_questions' => 'Gettings questions',
+		'upvoting_questions' => 'Upvoting questions',
+		'unvoting_questions' => 'Unvoting questions',
+		'downvoting_questions' => 'Downvoting questions',
+		'upvoting_answers' => 'Upvoting answers',
+		'unvoting_answers' => 'Unvoting answers',
+		'downvoting_answers' => 'Downvoting answers',
 		
 		'xmlrpc_access' => 'Access site via XML-RPC',
 		
-		'incorrect_user_pass' => 'Incorrect username or password.',
 		
 		'hello_x' => 'Hello, ^.',
 		
 		'no_items_found' => 'No items found.',
 		'x_items_found' => 'Retrieved ^ items.',
 		
+		'voted' => 'Voted successfully.',
 		'vote_error' => 'Error submitting vote.',
 		
 		'error' => 'Error processing request.',
