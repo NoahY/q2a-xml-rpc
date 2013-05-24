@@ -611,31 +611,6 @@ class q2a_xmlrpc_server extends IXR_Server {
 		return false;
 	}
 
-	
-	function do_favorite($data) {
-		require_once QA_INCLUDE_DIR.'qa-app-votes.php';
-		$postid = (int)@$data['action_id'];
-		$info = @$data['action_data'];
-		$vote = (int)@$info['vote'];
-		$type = @$info['type'];
-
-		$userid = qa_get_logged_in_userid();
-		$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
-		
-		if($postid === null || $vote === null || $type === null)
-			return false;
-		
-		$post=qa_db_select_with_pending(qa_db_full_post_selectspec($userid, $postid));
-
-		$voteerror=qa_vote_error_html($post, $vote, $userid, qa_request());
-		
-		if ($voteerror === false) {
-			qa_vote_set($post, $userid, qa_get_logged_in_handle(), $cookieid, $vote);
-			return true;
-		}
-		return false;
-	}
-	
 	function do_select($data) {
 		$questionid = (int)@$data['action_id'];
 		$answerid = @$data['action_data'];
