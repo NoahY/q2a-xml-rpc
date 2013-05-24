@@ -172,15 +172,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 		
 		$questions = array();
 		
-		foreach($qarray as $questionid => $post) {
-			$question = $this->get_single_question($data, $post['postid']);
-			
-			if(isset($data['action_id']) && $post['postid'] == $data['action_id'])
-				$output['acted'] = count($questions);
-				
-			$questions[] = $question;
-			
-		}
+		foreach($qarray as $questionid => $post)
+			$questions[] = $this->get_single_question($data, $post['postid']);
 		
 		if(empty($questions))
 			$output['message'] = qa_lang( 'xmlrpc/no_items_found' );
@@ -379,7 +372,13 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$question = qa_any_to_q_html_fields($questionin, $userid, qa_cookie_get(), $usershtml, null, $options);
 		}
 		$question['username'] = $this->get_username($userid);
-		$question['favorite'] = qa_db_select_with_pending(qa_db_is_favorite_selectspec($userid, QA_ENTITY_QUESTION, $questionid));
+		$question['favorite'] = qa_db_read_one_value(
+			qa_db_query_sub(
+				"SELECT COUNT(*) ^userfavorites WHERE userid=# AND entitytype=$ AND entityid=#",
+				$userid, QA_ENTITY_QUESTION, $questionid
+			),
+			true
+		);
 		
 		return $question;
 	}
