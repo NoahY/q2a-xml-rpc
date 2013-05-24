@@ -302,7 +302,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 				else
 					$comment = qa_post_html_fields($comment, $userid, $cookieid, $usershtml, null, $options);
 
-				$comment['username'] = $this->get_username($comment['userid']);
+				$comment['username'] = $this->get_username($comment['raw']['userid']);
 					
 				if (($comment['raw']['parentid'] == $questionid))
 					$qcomments[]=$comment;
