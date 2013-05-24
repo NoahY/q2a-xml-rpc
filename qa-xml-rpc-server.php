@@ -580,8 +580,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 	function do_vote($data) {
 		require_once QA_INCLUDE_DIR.'qa-app-votes.php';
-		$postid = (int)@$data['action_id'];
 		$info = @$data['action_data'];
+		$postid = (int)@$info['postid'];
 		$vote = (int)@$info['vote'];
 		$type = @$info['type'];
 
