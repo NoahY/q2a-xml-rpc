@@ -210,7 +210,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		}	
 
 		if ( $error )
-			return new IXR_Error( 405, $error ));
+			return new IXR_Error( 405, $error );
 
 		if ( !$this->login( $username, $password ) )
 			return $this->error;
