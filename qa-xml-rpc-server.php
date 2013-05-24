@@ -124,6 +124,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 		
 		if(isset($data['action'])) {
 			$output['action_success'] = false;
+			$type = @$data['action_data']['type'];
+			$vote = @$data['action_data']['vote'];
 			switch($data['action']) {
 				case 'vote':
 		
