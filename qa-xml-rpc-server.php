@@ -312,7 +312,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 				$allcomments[$key]=$commentfollow+qa_page_q_post_rules($commentfollow, $parent, $allcomments, null);
 			}
 
-			$usershtml=qa_userids_handles_html(array_merge(array($questioninin), $answers, $allcomments), true);
+			$usershtml=qa_userids_handles_html(array_merge(array($questionin), $answers, $allcomments), true);
 			
 			$question = qa_post_html_fields($questionin, $userid, $cookieid, $usershtml, null, $options);
 			$question['avatar'] = $this->get_post_avatar($questionin);
