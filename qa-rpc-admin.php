@@ -25,9 +25,17 @@ class qa_rpc_admin {
 	    $ok = null;
 
 		if (qa_clicked('xml_rpc_save')) {
-			foreach($_POST as $i => $v)
-				if(strpos($i,'xml_rpc_bool_') === 0)
-					qa_opt($i,(bool)$v);
+			qa_opt('xml_rpc_bool_active',(bool)@$_POST['xml_rpc_bool_active']);
+			qa_opt('xml_rpc_bool_get_questions',(bool)@$_POST['xml_rpc_bool_get_questions']);
+			qa_opt('xml_rpc_bool_question',(bool)@$_POST['xml_rpc_bool_question']);
+			qa_opt('xml_rpc_bool_answer',(bool)@$_POST['xml_rpc_bool_answer']);
+			qa_opt('xml_rpc_bool_comment',(bool)@$_POST['xml_rpc_bool_comment']);
+			qa_opt('xml_rpc_bool_q_upvote',(bool)@$_POST['xml_rpc_bool_q_upvote']);
+			qa_opt('xml_rpc_bool_q_unvote',(bool)@$_POST['xml_rpc_bool_q_unvote']);
+			qa_opt('xml_rpc_bool_q_downvote',(bool)@$_POST['xml_rpc_bool_q_downvote']);
+			qa_opt('xml_rpc_bool_a_upvote',(bool)@$_POST['xml_rpc_bool_a_upvote']);
+			qa_opt('xml_rpc_bool_a_unvote',(bool)@$_POST['xml_rpc_bool_a_unvote']);
+			qa_opt('xml_rpc_bool_a_downvote',(bool)@$_POST['xml_rpc_bool_a_downvote']);
 			
 			$ok = qa_lang('admin/options_saved');
 		}
@@ -136,6 +144,7 @@ class qa_rpc_admin {
 			'value' => qa_opt('xml_rpc_bool_a_downvote'),
 			'type' => 'checkbox',
 		);
+		
 		return array(           
 			'ok' => ($ok && !isset($error)) ? $ok : null,
 				
