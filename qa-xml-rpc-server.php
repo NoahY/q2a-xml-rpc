@@ -271,6 +271,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 			
 		if(@$data['full']) {
 			
+			require_once(QA_INCLUDE_DIR.'qa-page-question-view.php');
+			
 			@list($question, $childposts, $achildposts, $parentquestion, $closepost, $extravalue, $categories, $favorite)=qa_db_select_with_pending(
 				qa_db_full_post_selectspec($userid, $questionid),
 				qa_db_full_child_posts_selectspec($userid, $questionid),
