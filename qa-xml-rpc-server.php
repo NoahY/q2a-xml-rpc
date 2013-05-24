@@ -176,7 +176,9 @@ class q2a_xmlrpc_server extends IXR_Server {
 			if(isset($data['action_id']) && $post['postid'] == $data['action_id'])
 				$output['acted'] = count($questions);
 
-			$questions[] = $this->get_single_question($data, $post['postid']);
+			$question = $this->get_single_question($data, $post['postid']);
+			if($question)
+			$questions[] = $question;
 		}
 		
 		if(empty($questions))
@@ -269,15 +271,13 @@ class q2a_xmlrpc_server extends IXR_Server {
 	function get_single_question($data, $questionid) {
 		$userid = qa_get_logged_in_userid();
 		$options=qa_post_html_defaults('Q', @$data['full']);
-		if (isset($data['categorypathprefix']))
-			$options['categorypathprefix'] = $categorypathprefix;
-
-		$cookieid=qa_cookie_get();
 			
 		if(@$data['full']) {
 			
+			require_once(QA_INCLUDE_DIR.'qa-page-question-view.php');
+			$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
 			$coptions=qa_post_html_defaults('C', true);
-
+			
 			@list($questionin, $childposts, $achildposts, $parentquestion, $closepost, $extravalue, $categories, $favorite)=qa_db_select_with_pending(
 				qa_db_full_post_selectspec($userid, $questionid),
 				qa_db_full_child_posts_selectspec($userid, $questionid),
@@ -288,35 +288,29 @@ class q2a_xmlrpc_server extends IXR_Server {
 				qa_db_category_nav_selectspec($questionid, true, true, true),
 				isset($userid) ? qa_db_is_favorite_selectspec($userid, QA_ENTITY_QUESTION, $questionid) : null
 			);
-
-
-			$answers = array();
-			$allcomments = array();
 			
-			foreach ($childposts as $postid => $post)
-				switch ($post['type']) {
-					case 'A':
-					case 'A_HIDDEN':
-					case 'A_QUEUED':
-						$answers[]=$post;
-						break;
-					case 'Q': // never show follow-on Qs which have been hidden, even to admins
-					case 'C':
-					case 'C_HIDDEN':
-					case 'C_QUEUED':
-						$allcomments[] = $post;
-						break;
-				}
+			if ($questionin['basetype']!='Q') // don't allow direct viewing of other types of post
+				return null;
 
-			foreach ($achildposts as $postid => $post)
-				switch ($post['type']) {
-					case 'Q': // never show follow-on Qs which have been hidden, even to admins
-					case 'C':
-					case 'C_HIDDEN':
-					case 'C_QUEUED':
-						$allcomments[] = $post;
-						break;
-				}
+			$questionin['extra']=$extravalue;
+			
+			$answers=qa_page_q_load_as($questionin, $childposts);
+			$allcomments=qa_page_q_load_c_follows($questionin, $childposts, $achildposts);
+			
+			$questionin=$questionin+qa_page_q_post_rules($questionin, null, null, $childposts); // array union
+			
+			if ($questionin['selchildid'] && (@$answers[$questionin['selchildid']]['type']!='A'))
+				$questionin['selchildid']=null; // if selected answer is hidden or somehow not there, consider it not selected
+
+			foreach ($answers as $key => $answer) {
+				$answers[$key]=$answer+qa_page_q_post_rules($answer, $questionin, $answers, $achildposts);
+				$answers[$key]['isselected']=($answer['postid']==$questionin['selchildid']);
+			}
+
+			foreach ($allcomments as $key => $commentfollow) {
+				$parent=($commentfollow['parentid']==$questionid) ? $questionin : @$answers[$commentfollow['parentid']];
+				$allcomments[$key]=$commentfollow+qa_page_q_post_rules($commentfollow, $parent, $allcomments, null);
+			}
 
 			$usershtml=qa_userids_handles_html(array_merge(array($questionin), $answers, $allcomments), true);
 			
@@ -586,8 +580,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 	function do_vote($data) {
 		require_once QA_INCLUDE_DIR.'qa-app-votes.php';
-		$postid = (int)@$data['action_id'];
 		$info = @$data['action_data'];
+		$postid = (int)@$info['postid'];
 		$vote = (int)@$info['vote'];
 		$type = @$info['type'];
 
@@ -651,6 +645,10 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$output['confirmation'] = $error;
 		$output['message'] = $error?qa_lang( 'xmlrpc/error' ):qa_lang( 'xmlrpc/success' );
 		return $output;
+	}
+
+	function get_post_buttons($post) {
+		
 	}
 
 	function get_post_avatar($post) {
