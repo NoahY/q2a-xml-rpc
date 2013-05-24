@@ -232,6 +232,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 		}
 		else
 			$output['message'] = qa_lang( 'xmlrpc/vote_error' );
+			
+		return $output;
 
 	}
 
