@@ -209,7 +209,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 				break;
 		}	
 
-		if ( $error ) )
+		if ( $error )
 			return new IXR_Error( 405, $error ));
 
 		if ( !$this->login( $username, $password ) )
@@ -218,18 +218,20 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$userid = qa_get_logged_in_userid();
 		$output = array();
 		
-		if(isset($data['meta']))
-			$output['meta'] = $this->get_meta_data();
+		if(isset($data['meta_data']))
+			$output['meta_data'] = $this->get_meta_data();
 		
 		$output['confirmation'] = $this->do_vote($data);
 
 		if($output['confirmation']) {
 			$output['message'] = qa_lang( 'xmlrpc/voted' );
-			$output['data']=(int)qa_db_uservote_get((int)@$data['action_id'], $userid);
+			$info = @$data['action_data'];
+			$questionid = (int)@$info['questionid'];
+			if($questionid)
+				$output['data'] = get_single_question($data, $data)
 		}
-		else {
+		else
 			$output['message'] = qa_lang( 'xmlrpc/vote_error' );
-		}
 
 	}
 
@@ -579,7 +581,6 @@ class q2a_xmlrpc_server extends IXR_Server {
 		return false;
 	}
 	
-
 	function get_meta_data() {
 		$meta['options'] = $this->get_qa_opts();
 		$meta['user'] = $this->get_user_data();
