@@ -126,6 +126,28 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$output['action_success'] = false;
 			switch($data['action']) {
 				case 'vote':
+		
+					switch(true) {
+						case ($type == 'Q' && $vote > 0 && !qa_opt( 'xml_rpc_bool_q_upvote' )):
+							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/upvoting_questions') );
+							break 2;
+						case ($type == 'Q' && $vote == 0 && !qa_opt( 'xml_rpc_bool_q_unvote' )):
+							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/unvoting_questions') );
+							break 2;
+						case ($type == 'Q' && $vote < 0 && !qa_opt( 'xml_rpc_bool_q_downvote' )):
+							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/downvoting_questions') );
+							break 2;
+						case ($type == 'A' && $vote > 0 && !qa_opt( 'xml_rpc_bool_a_upvote' )):
+							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/upvoting_questions') );
+							break 2;
+						case ($type == 'A' && $vote == 0 && !qa_opt( 'xml_rpc_bool_a_unvote' )):
+							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/unvoting_questions') );
+							break 2;
+						case ($type == 'A' && $vote < 0 && !qa_opt( 'xml_rpc_bool_a_downvote' )):
+							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/downvoting_questions') );
+							break 2;
+					}	
+
 					$output['action_success'] = $this->do_vote($data);
 					break;
 				case 'post':
@@ -363,12 +385,9 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$userid = qa_get_logged_in_userid();
 		$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
 		
-		if(!$postid || !$vote || !$type)
+		if($postid === null || $vote === null || $type === null)
 			return false;
 		
-		if (($type == 'Q' && $vote > 0 && !qa_opt( 'xml_rpc_bool_q_upvote' ) ) || ($type == 'Q' && $vote < 0 && !qa_opt( 'xml_rpc_bool_q_dwonvote' ) ) || ($type == 'A' && $vote > 0 && !qa_opt( 'xml_rpc_bool_a_upvote' ) ) || ($type == 'A' && $vote < 0 && !qa_opt( 'xml_rpc_bool_a_dwonvote' ) ))
-			return false;
-			
 		$post=qa_db_select_with_pending(qa_db_full_post_selectspec($userid, $postid));
 
 		$voteerror=qa_vote_error_html($post, $vote, $userid, qa_request());
