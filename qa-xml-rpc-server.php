@@ -228,7 +228,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$info = @$data['action_data'];
 			$questionid = (int)@$info['questionid'];
 			if($questionid)
-				$output['data'] = get_single_question($data, $data)
+				$output['data'] = get_single_question($data, $data);
 		}
 		else
 			$output['message'] = qa_lang( 'xmlrpc/vote_error' );
