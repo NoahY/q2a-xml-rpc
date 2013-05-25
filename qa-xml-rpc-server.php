@@ -166,8 +166,15 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 		
 		$qarray = qa_db_select_with_pending(
-			qa_db_qs_selectspec($userid, $data['sort'], (int)$data['start'], mysql_real_escape_string(@$data['cats']), null, false, false, (int)$data['size'])
+			qa_db_qs_selectspec($userid, $data['sort'], (int)$data['start'], mysql_real_escape_string(@$data['cats']), null, false, false, (int)$data['size']+1) // +1 is to check for more
 		);
+		
+		$more = false;
+		if(count($qarray) > $data['size']) {
+			$more = true;
+			array_pop($qarray);
+		}
+		
 		$usershtml=qa_userids_handles_html(qa_any_get_userids_handles($qarray));
 		
 		$questions = array();
@@ -178,8 +185,15 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 			$question = $this->get_single_question($data, $post['postid']);
 			if($question)
-			$questions[] = $question;
+				$questions[] = $question;
 		}
+		
+		// add extra list item for loading more
+		
+		if($more && isset($data['more'])) {
+			$questions[] = "<more>";
+		}
+		
 		
 		if(empty($questions))
 			$output['message'] = qa_lang( 'xmlrpc/no_items_found' );
