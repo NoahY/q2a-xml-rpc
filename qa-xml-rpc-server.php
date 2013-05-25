@@ -165,20 +165,26 @@ class q2a_xmlrpc_server extends IXR_Server {
 		}
 
 		$sort = @$data['sort'];
-
+		
+		$sortsql = " WHERE type='Q'";
+		
+		
 		switch ($sort) {
 			case 'acount':
 			case 'flagcount':
 			case 'netvotes':
 			case 'views':
-				$sortsql='ORDER BY '.$sort.' DESC, created DESC';
+				$sortsql.=' ORDER BY '.$sort.' DESC, created DESC';
 				break;
 			case 'updated':
-				$sortsql='ORDER BY greatest(ifnull(created,0), ifnull(updated,0)) DESC';
+				$sortsql.=' ORDER BY greatest(ifnull(created,0), ifnull(updated,0)) DESC';
+				break;
+			case 'favorites':
+				$sortsql = ", ^userfavorites".$sortsql." AND ^posts.postid=^userfavorites.entityid AND ^userfavorites.userid=".mysql_escape_string($userid)." AND ^userfavorites.entitytype='".mysql_escape_string(QA_ENTITY_QUESTION)."' ORDER BY greatest(ifnull(^posts.created,0), ifnull(^posts.updated,0)) DESC";
 				break;
 			case 'created':
 			case 'hotness':
-				$sortsql='ORDER BY '.$sort.' DESC';
+				$sortsql.=' ORDER BY '.$sort.' DESC';
 				break;
 				
 			default:
@@ -187,7 +193,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		
 		$qarray = qa_db_read_all_values(
 				qa_db_query_sub(
-					"SELECT postid FROM ^posts WHERE type='Q' ".$sortsql." LIMIT #,#",
+					"SELECT ^posts.postid FROM ^posts".$sortsql." LIMIT #,#",
 					(int)$data['start'], (int)$data['size']+1 // +1 is to check for more
 				)
 			);
