@@ -171,10 +171,11 @@ class q2a_xmlrpc_server extends IXR_Server {
 			case 'flagcount':
 			case 'netvotes':
 			case 'views':
-			case 'updated':
 				$sortsql='ORDER BY '.$sort.' DESC, created DESC';
 				break;
-			
+			case 'updated':
+				$sortsql='ORDER BY MAX(created,updated) DESC';
+				break;
 			case 'created':
 			case 'hotness':
 				$sortsql='ORDER BY '.$sort.' DESC';
@@ -810,8 +811,6 @@ class q2a_xmlrpc_server extends IXR_Server {
 			require_once QA_INCLUDE_DIR.'qa-db-users.php';
 			require_once QA_INCLUDE_DIR.'qa-db-selects.php';
 		
-			//qa_limits_increment(null, QA_LIMIT_LOGINS); // This causes problems...
-
 			$errors=array();
 			
 			if (qa_opt('allow_login_email_only') || (strpos($username, '@')!==false)) // handles can't contain @ symbols
@@ -839,6 +838,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		} else {
 			$this->error = new IXR_Error( 1512,qa_lang('users/login_limit'));
 		}
+		qa_limits_increment(null, QA_LIMIT_LOGINS); // log on failure
 		return false;
 	}
 	
