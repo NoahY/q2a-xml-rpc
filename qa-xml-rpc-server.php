@@ -603,12 +603,14 @@ class q2a_xmlrpc_server extends IXR_Server {
 	}
 
 	function do_select($data) {
+		
 		$questionid = (int)@$data['action_id'];
 		$answerid = @$data['action_data'];
 
 		if($questionid === null)
 			return false;
 
+		require_once QA_INCLUDE_DIR.'qa-app-posts.php';
 		$userid = qa_get_logged_in_userid();
 		
 		qa_post_set_selchildid($questionid, $answerid, $userid);
