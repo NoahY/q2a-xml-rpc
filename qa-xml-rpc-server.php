@@ -656,13 +656,15 @@ class q2a_xmlrpc_server extends IXR_Server {
 	}
 	
 	function do_favorite($data) {
-		$postid = (int)@$data['action_id'];
 		$info = @$data['action_data'];
+		$postid = (int)@$info['postid'];
 		$favorite = isset($info['favorite']);
 		$type = @$info['type'];
 
 		if($postid === null || $type === null)
 			return false;
+
+		require_once QA_INCLUDE_DIR.'qa-app-favorites.php';
 
 		$userid = qa_get_logged_in_userid();
 		$handle = qa_get_logged_in_handle();
