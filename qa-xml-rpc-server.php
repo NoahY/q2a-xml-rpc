@@ -178,6 +178,9 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$usershtml=qa_userids_handles_html(qa_any_get_userids_handles($qarray));
 		
 		$questions = array();
+
+		if(isset($data['more']) && (int)$data['start'] > 0)
+			$questions[] = "<less>";
 		
 		foreach($qarray as $questionid => $post) {
 			if(isset($data['action_id']) && $post['postid'] == $data['action_id'])
@@ -190,9 +193,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 		
 		// add extra list item for loading more
 		
-		if($more && isset($data['more'])) {
+		if($more && isset($data['more']))
 			$questions[] = "<more>";
-		}
 		
 		
 		if(empty($questions))
