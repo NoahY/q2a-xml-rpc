@@ -185,11 +185,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 			$question = $this->get_single_question($data, $post['postid']);
 			if($question)
-<<<<<<< HEAD
 				$questions[] = $question;
-=======
-			$questions[] = $question;
->>>>>>> work
 		}
 		
 		// add extra list item for loading more
