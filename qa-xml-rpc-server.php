@@ -186,7 +186,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		
 		$qarray = qa_db_read_all_values(
 				qa_db_query_sub(
-					"SELECT postid FROM ^posts WHERE type=Q ".$sortsql." LIMIT #,#",
+					"SELECT postid FROM ^posts WHERE type='Q' ".$sortsql." LIMIT #,#",
 					(int)$data['start'], (int)$data['size']+1 // +1 is to check for more
 				)
 			);
