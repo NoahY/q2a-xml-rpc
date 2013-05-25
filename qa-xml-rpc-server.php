@@ -174,7 +174,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 				$sortsql='ORDER BY '.$sort.' DESC, created DESC';
 				break;
 			case 'updated':
-				$sortsql='ORDER BY MAX(created,updated) DESC';
+				$sortsql='ORDER BY greatest(ifnull(created,0), ifnull(updated,0)) DESC';
 				break;
 			case 'created':
 			case 'hotness':
