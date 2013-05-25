@@ -164,10 +164,32 @@ class q2a_xmlrpc_server extends IXR_Server {
 			}
 		}
 
+		$sort = @$data['sort'];
+
+		switch ($sort) {
+			case 'acount':
+			case 'flagcount':
+			case 'netvotes':
+			case 'views':
+			case 'updated':
+				$sortsql='ORDER BY '.$sort.' DESC, created DESC';
+				break;
+			
+			case 'created':
+			case 'hotness':
+				$sortsql='ORDER BY '.$sort.' DESC';
+				break;
+				
+			default:
+				return new IXR_Error( 405, qa_lang('xmlrpc/error'));
+		}
 		
-		$qarray = qa_db_select_with_pending(
-			qa_db_qs_selectspec($userid, $data['sort'], (int)$data['start'], mysql_real_escape_string(@$data['cats']), null, false, false, (int)$data['size']+1) // +1 is to check for more
-		);
+		$qarray = qa_db_read_all_values(
+				qa_db_query_sub(
+					"SELECT postid FROM ^posts WHERE type=Q ".$sortsql." LIMIT #,#",
+					(int)$data['start'], (int)$data['size']+1 // +1 is to check for more
+				)
+			);
 		
 		$more = false;
 		if(count($qarray) > $data['size']) {
@@ -175,18 +197,16 @@ class q2a_xmlrpc_server extends IXR_Server {
 			array_pop($qarray);
 		}
 		
-		$usershtml=qa_userids_handles_html(qa_any_get_userids_handles($qarray));
-		
 		$questions = array();
 
 		if(isset($data['more']) && (int)$data['start'] > 0)
 			$questions[] = "<less>";
 		
-		foreach($qarray as $questionid => $post) {
-			if(isset($data['action_id']) && $post['postid'] == $data['action_id'])
+		foreach($qarray as $postid) {
+			if(isset($data['action_id']) && $postid == $data['action_id'])
 				$output['acted'] = count($questions);
 
-			$question = $this->get_single_question($data, $post['postid']);
+			$question = $this->get_single_question($data, $postid);
 			if($question)
 				$questions[] = $question;
 		}
