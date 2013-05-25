@@ -859,6 +859,9 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$user['username'] = qa_get_logged_in_handle();
 		}
 		$user['level'] = qa_get_logged_in_level();
+		$user['flags'] = qa_get_logged_in_flags();
+		
+		return $user;
 	}
 
 	function get_username($userid) {
