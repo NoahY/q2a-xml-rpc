@@ -165,8 +165,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 		}
 
 		$sort = @$data['sort'];
-		$start = (int)@$data['start'],
-		$size = (int)@$data['size']
+		$start = (int)@$data['start'];
+		$size = (int)@$data['size'];
 		
 		$sortsql = " WHERE type='Q'";
 		
