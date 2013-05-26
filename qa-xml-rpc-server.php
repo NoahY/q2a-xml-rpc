@@ -585,6 +585,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 			qa_db_qs_selectspec($userid, 'created', 0, null, null, false, true, $count),
 			$aselspec,
 			$cselspec,
+			$eselspec
 		);
 		$qarray = qa_any_sort_and_dedupe(array_merge($questions1, $questions2, $questions3, $questions4)); // questions
 
