@@ -541,7 +541,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 		
 		
 		$fields['avatar'] = $this->get_post_avatar($post);
-		return $fields
+		
+		return $fields;
 	}
 	
 	function get_updated_qs($count) {
