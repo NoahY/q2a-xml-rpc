@@ -357,8 +357,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 			$usershtml=qa_userids_handles_html(array_merge(array($questionin), $answers, $allcomments), true);
 			
-			$question = qa_post_html_fields($questionin, $userid, $cookieid, $usershtml, null, $options);
-			$question['avatar'] = $this->get_post_avatar($questionin);
+			$question = $this->get_full_post($questionin, $options, $usershtml);
 
 			$qcomments = array();
 
@@ -416,6 +415,133 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 		
 		return $question;
+	}
+	
+	function get_full_post($post, $options, $usershtml) {
+		$fields['raw'] = $post;
+		$postid = $post['postid'];
+		$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
+
+		// content
+		
+		if (@$options['contentview'] && !empty($post['content'])) {
+			$viewer=qa_load_viewer($post['content'], $post['format']);
+			
+			$fields['content']=$viewer->get_html($post['content'], $post['format'], array(
+				'blockwordspreg' => @$options['blockwordspreg'],
+				'showurllinks' => @$options['showurllinks'],
+				'linksnewwindow' => @$options['linksnewwindow'],
+			));
+		}
+
+		$isbyuser = $post['raw']['isbyuser'];
+		
+		if ($post['hidden'])
+			$fields['vote_state']='disabled';
+		elseif ($isbyuser)
+			$fields['vote_state']='disabled';
+		elseif (@$post['uservote']>0)
+			$fields['vote_state']='voted_up';
+		elseif (@$post['uservote']<0)
+			$fields['vote_state']='voted_down';
+		else {
+			if (strpos($options['voteview'], '-uponly-level')) {
+				$fields['vote_state']='up_only';
+			} else {
+				$fields['vote_state']='enabled';
+			}
+		}
+		
+		//	Created when and by whom
+	
+		$fields['meta_order']=qa_lang_html('main/meta_order'); // sets ordering of meta elements which can be language-specific
+		
+		if (@$options['whatview'] ) {
+			$fields['what']=qa_lang_html($isquestion ? 'main/asked' : ($isanswer ? 'main/answered' : 'main/commented'));
+				
+			if (@$options['whatlink'] && !$isquestion)
+				$fields['what_url']=qa_path_html(qa_request(), array('show' => $postid), null, null, qa_anchor($post['basetype'], $postid));
+		}
+		
+		if (isset($post['created']) && @$options['whenview'])
+			$fields['when']=qa_when_to_html($post['created'], @$options['fulldatedays']);
+		
+		if (@$options['whoview']) {
+			$fields['who']=qa_who_to_html($isbyuser, @$post['userid'], $usershtml, @$options['ipview'] ? @$post['createip'] : null, $microformats);
+			
+			if (isset($post['points'])) {
+				if (@$options['pointsview'])
+					$fields['who']['points']=($post['points']==1) ? qa_lang_html_sub_split('main/1_point', '1', '1')
+						: qa_lang_html_sub_split('main/x_points', qa_html(number_format($post['points'])));
+				
+				if (isset($options['pointstitle']))
+					$fields['who']['title']=qa_get_points_title_html($post['points'], $options['pointstitle']);
+			}
+				
+			if (isset($post['level']))
+				$fields['who']['level']=qa_html(qa_user_level_string($post['level']));
+		}
+
+
+	//	Updated when and by whom
+		$isselected=@$options['isselected'];
+		
+		if (
+			@$options['updateview'] && isset($post['updated']) &&
+			(($post['updatetype']!=QA_UPDATE_SELECTED) || $isselected) && // only show selected change if it's still selected
+			( // otherwise check if one of these conditions is fulfilled...
+				(!isset($post['created'])) || // ... we didn't show the created time (should never happen in practice)
+				($post['hidden'] && ($post['updatetype']==QA_UPDATE_VISIBLE)) || // ... the post was hidden as the last action
+				(isset($post['closedbyid']) && ($post['updatetype']==QA_UPDATE_CLOSED)) || // ... the post was closed as the last action
+				(abs($post['updated']-$post['created'])>300) || // ... or over 5 minutes passed between create and update times
+				($post['lastuserid']!=$post['userid']) // ... or it was updated by a different user
+			)
+		) {
+			switch ($post['updatetype']) {
+				case QA_UPDATE_TYPE:
+				case QA_UPDATE_PARENT:
+					$langstring='main/moved';
+					break;
+					
+				case QA_UPDATE_CATEGORY:
+					$langstring='main/recategorized';
+					break;
+
+				case QA_UPDATE_VISIBLE:
+					$langstring=$post['hidden'] ? 'main/hidden' : 'main/reshown';
+					break;
+					
+				case QA_UPDATE_CLOSED:
+					$langstring=isset($post['closedbyid']) ? 'main/closed' : 'main/reopened';
+					break;
+					
+				case QA_UPDATE_TAGS:
+					$langstring='main/retagged';
+					break;
+				
+				case QA_UPDATE_SELECTED:
+					$langstring='main/selected';
+					break;
+				
+				default:
+					$langstring='main/edited';
+					break;
+			}
+			
+			$fields['what_2']=qa_lang_html($langstring);
+			
+			if (@$options['whenview']) {
+				$fields['when_2']=qa_when_to_html($post['updated'], @$options['fulldatedays']);
+				
+			}
+			
+			if (isset($post['lastuserid']) && @$options['whoview'])
+				$fields['who_2']=qa_who_to_html(isset($userid) && ($post['lastuserid']==$userid), $post['lastuserid'], $usershtml, @$options['ipview'] ? $post['lastip'] : null, false);
+		}
+		
+		
+		$fields['avatar'] = $this->get_post_avatar($post);
+		
 	}
 	
 	function get_updated_qs($count) {
