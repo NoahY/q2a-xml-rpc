@@ -177,10 +177,10 @@ class q2a_xmlrpc_server extends IXR_Server {
 				$sortsql.=' ORDER BY '.$sort.' DESC, created DESC';
 				break;
 			case 'updated':
-				$sortsql.=' ORDER BY IF(updated IS NOT NULL, updated, created) DESC';
+				// fudge
 				break;
 			case 'favorites':
-				$sortsql = ", ^userfavorites".$sortsql." AND ^posts.postid=^userfavorites.entityid AND ^userfavorites.userid=".mysql_escape_string($userid)." AND ^userfavorites.entitytype='".mysql_escape_string(QA_ENTITY_QUESTION)."' ORDER BY IF(updated IS NOT NULL, updated, created) DESC";
+				$sortsql = ", ^userfavorites".$sortsql." AND ^posts.postid=^userfavorites.entityid AND ^userfavorites.userid=".mysql_escape_string($userid)." AND ^userfavorites.entitytype='".mysql_escape_string(QA_ENTITY_QUESTION)."' ORDER BY created DESC";
 				break;
 			case 'created':
 			case 'hotness':
@@ -191,22 +191,25 @@ class q2a_xmlrpc_server extends IXR_Server {
 				return new IXR_Error( 405, qa_lang('xmlrpc/error'));
 		}
 		
-		$qarray = qa_db_read_all_values(
-				qa_db_query_sub(
-					"SELECT ^posts.postid FROM ^posts".$sortsql." LIMIT #,#",
-					(int)$data['start'], (int)$data['size']+1 // +1 is to check for more
-				)
-			);
+		if($sort == 'updated')
+			$qarray = $this->get_updated_qs(@$data['size']);
+		else
+			$qarray = qa_db_read_all_values(
+					qa_db_query_sub(
+						"SELECT ^posts.postid FROM ^posts".$sortsql." LIMIT #,#",
+						(int)@$data['start'], (int)@$data['size']+1 // +1 is to check for more
+					)
+				);
 		
 		$more = false;
-		if(count($qarray) > $data['size']) {
+		if(count($qarray) > (int)@$data['size']) {
 			$more = true;
 			array_pop($qarray);
 		}
 		
 		$questions = array();
 
-		if(isset($data['more']) && (int)$data['start'] > 0)
+		if(isset($data['more']) && (int)@$data['start'] > 0)
 			$questions[] = "<less>";
 		
 		foreach($qarray as $postid) {
@@ -416,6 +419,25 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 		
 		return $question;
+	}
+	
+	function get_updated_qs($count) {
+		$userid = qa_get_logged_in_userid();
+
+		@list($questions1, $questions2, $questions3, $questions4)=qa_db_select_with_pending(
+			qa_db_qs_selectspec($userid, 'created', 0, null, null, false, false, $count),
+			qa_db_recent_a_qs_selectspec($userid, 0, $count),
+			qa_db_recent_c_qs_selectspec($userid, 0, $count),
+			qa_db_recent_edit_qs_selectspec($userid, 0, $count)
+		);
+		$qarray = qa_any_sort_and_dedupe(array_merge($questions1, $questions2, $questions3, $questions4)); // questions
+
+		$questions = array();
+		
+		foreach ($qarray as $question) {
+			$questions[] = $question['postid'];
+		}
+		return $questions;
 	}
 	
 	function do_post($data) {
