@@ -195,7 +195,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$qarray = $this->get_updated_qs(@$data['size']);
 		else
 			$qarray = qa_db_select_with_pending(
-				qa_db_qs_selectspec($userid, 'created', @$data['start'], null, null, false, true, @$data['size']+1),
+				qa_db_qs_selectspec($userid, 'created', @$data['start'], null, null, false, true, @$data['size']+1)
 			);
 		
 		$more = false;
