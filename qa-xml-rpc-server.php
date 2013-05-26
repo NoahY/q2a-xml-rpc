@@ -194,12 +194,9 @@ class q2a_xmlrpc_server extends IXR_Server {
 		if($sort == 'updated')
 			$qarray = $this->get_updated_qs(@$data['size']);
 		else
-			$qarray = qa_db_read_all_values(
-					qa_db_query_sub(
-						"SELECT ^posts.postid FROM ^posts".$sortsql." LIMIT #,#",
-						(int)@$data['start'], (int)@$data['size']+1 // +1 is to check for more
-					)
-				);
+			$qarray = qa_db_select_with_pending(
+				qa_db_qs_selectspec($userid, 'created', @$data['start'], null, null, false, true, @$data['size']+1),
+			);
 		
 		$more = false;
 		if(count($qarray) > (int)@$data['size']) {
@@ -212,11 +209,11 @@ class q2a_xmlrpc_server extends IXR_Server {
 		if(isset($data['more']) && (int)@$data['start'] > 0)
 			$questions[] = "<less>";
 		
-		foreach($qarray as $postid) {
-			if(isset($data['action_id']) && $postid == $data['action_id'])
+		foreach($qarray as $question) {
+			if(isset($data['action_id']) && $question['postid'] == $data['action_id'])
 				$output['acted'] = count($questions);
 
-			$question = $this->get_single_question($data, $postid);
+			$question = $this->get_single_question($data, $question);
 			if($question)
 				$questions[] = $question;
 		}
@@ -314,8 +311,9 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 	// worker functions
 
-	function get_single_question($data, $questionid) {
+	function get_single_question($data, $questionin) {
 		$userid = qa_get_logged_in_userid();
+		$questionid = $questionin['postid'];
 		$options=qa_post_html_defaults('Q', @$data['full']);
 			
 		if(@$data['full']) {
@@ -324,8 +322,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
 			$coptions=qa_post_html_defaults('C', true);
 			
-			@list($questionin, $childposts, $achildposts, $parentquestion, $closepost, $extravalue, $categories, $favorite)=qa_db_select_with_pending(
-				qa_db_full_post_selectspec($userid, $questionid),
+			@list($childposts, $achildposts, $parentquestion, $closepost, $extravalue, $categories, $favorite)=qa_db_select_with_pending(
 				qa_db_full_child_posts_selectspec($userid, $questionid),
 				qa_db_full_a_child_posts_selectspec($userid, $questionid),
 				qa_db_post_parent_q_selectspec($questionid),
@@ -432,12 +429,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		);
 		$qarray = qa_any_sort_and_dedupe(array_merge($questions1, $questions2, $questions3, $questions4)); // questions
 
-		$questions = array();
-		
-		foreach ($qarray as $question) {
-			$questions[] = $question['postid'];
-		}
-		return $questions;
+		return array_values($questions);
 	}
 	
 	function do_post($data) {
