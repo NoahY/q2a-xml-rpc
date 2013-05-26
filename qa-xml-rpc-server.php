@@ -424,13 +424,12 @@ class q2a_xmlrpc_server extends IXR_Server {
 	function get_updated_qs($count) {
 		$userid = qa_get_logged_in_userid();
 
-		@list($questions1, $questions2, $questions3, $questions4)=qa_db_select_with_pending(
-			qa_db_qs_selectspec($userid, 'created', 0, null, null, false, false, $count),
+		@list($questions2, $questions3, $questions4)=qa_db_select_with_pending(
 			qa_db_recent_a_qs_selectspec($userid, 0, $count),
 			qa_db_recent_c_qs_selectspec($userid, 0, $count),
 			qa_db_recent_edit_qs_selectspec($userid, 0, $count)
 		);
-		$qarray = qa_any_sort_and_dedupe(array_merge($questions1, $questions2, $questions3, $questions4)); // questions
+		$qarray = qa_any_sort_and_dedupe(array_merge($questions2, $questions3, $questions4)); // questions
 
 		$questions = array();
 		
