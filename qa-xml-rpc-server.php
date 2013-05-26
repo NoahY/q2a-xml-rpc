@@ -429,7 +429,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		);
 		$qarray = qa_any_sort_and_dedupe(array_merge($questions1, $questions2, $questions3, $questions4)); // questions
 
-		return array_values($questions);
+		return array_values($qarray);
 	}
 	
 	function do_post($data) {
