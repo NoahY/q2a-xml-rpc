@@ -578,7 +578,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$cselspec = qa_db_recent_edit_qs_selectspec($userid, 0, array());
 		$cselspec = array_merge($cselspec,$selectspec);
 
-		$eselspec = qa_db_recent_edit_qs_selectspec($userid, 0, array())
+		$eselspec = qa_db_recent_edit_qs_selectspec($userid, 0, array());
 		$eselspec = array_merge($eselspec,$selectspec);
 
 		@list($questions1, $questions2, $questions3, $questions4)=qa_db_select_with_pending(
