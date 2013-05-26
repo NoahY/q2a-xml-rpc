@@ -165,6 +165,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 		}
 
 		$sort = @$data['sort'];
+		$start = (int)@$data['start'],
+		$size = (int)@$data['size']
 		
 		$sortsql = " WHERE type='Q'";
 		
@@ -192,21 +194,24 @@ class q2a_xmlrpc_server extends IXR_Server {
 		}
 		
 		if($sort == 'updated')
-			$qarray = $this->get_updated_qs(@$data['size']);
+			$qarray = $this->get_updated_qs($size);
 		else
-			$qarray = qa_db_select_with_pending(
-				qa_db_qs_selectspec($userid, 'created', @$data['start'], null, null, false, true, @$data['size']+1)
+			$qarray = qa_db_read_all_assoc(
+				qa_db_query_sub(
+					"SELECT * FROM ^posts".$sortsql." LIMIT #,#",
+					+1
+				)
 			);
 		
 		$more = false;
-		if(count($qarray) > (int)@$data['size']) {
+		if(count($qarray) > $size) {
 			$more = true;
 			array_pop($qarray);
 		}
 		
 		$questions = array();
 
-		if(isset($data['more']) && (int)@$data['start'] > 0)
+		if(isset($data['more']) && $start > 0)
 			$questions[] = "<less>";
 		
 		foreach($qarray as $question) {
