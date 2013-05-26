@@ -180,7 +180,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 				// fudge
 				break;
 			case 'favorites':
-				$sortsql = ", ^userfavorites".$sortsql." AND ^posts.postid=^userfavorites.entityid AND ^userfavorites.userid=".mysql_escape_string($userid)." AND ^userfavorites.entitytype='".mysql_escape_string(QA_ENTITY_QUESTION)."' ORDER BY created DESC";
+				$sortsql = ", ^userfavorites".$sortsql." AND ^posts.postid=^userfavorites.entityid AND ^userfavorites.userid=".mysql_real_escape_string($userid)." AND ^userfavorites.entitytype='".mysql_real_escape_string(QA_ENTITY_QUESTION)."' ORDER BY created DESC";
 				break;
 			case 'created':
 			case 'hotness':
@@ -424,12 +424,13 @@ class q2a_xmlrpc_server extends IXR_Server {
 	function get_updated_qs($count) {
 		$userid = qa_get_logged_in_userid();
 
-		@list($questions2, $questions3, $questions4)=qa_db_select_with_pending(
-			qa_db_recent_a_qs_selectspec($userid, 0, $count),
-			qa_db_recent_c_qs_selectspec($userid, 0, $count),
-			qa_db_recent_edit_qs_selectspec($userid, 0, $count)
+		@list($questions1, $questions2, $questions3, $questions4)=qa_db_select_with_pending(
+			qa_db_qs_selectspec($userid, 'created', 0, null, null, false, false, $count),
+			qa_db_recent_a_qs_selectspec($userid, 0, array()),
+			qa_db_recent_c_qs_selectspec($userid, 0, array()),
+			qa_db_recent_edit_qs_selectspec($userid, 0, array())
 		);
-		$qarray = qa_any_sort_and_dedupe(array_merge($questions2, $questions3, $questions4)); // questions
+		$qarray = qa_any_sort_and_dedupe(array_merge($questions1, $questions2, $questions3, $questions4)); // questions
 
 		$questions = array();
 		
