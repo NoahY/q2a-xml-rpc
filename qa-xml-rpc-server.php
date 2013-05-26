@@ -177,10 +177,10 @@ class q2a_xmlrpc_server extends IXR_Server {
 				$sortsql.=' ORDER BY '.$sort.' DESC, created DESC';
 				break;
 			case 'updated':
-				$sortsql.=' ORDER BY IF(created > updated, created, updated) DESC';
+				$sortsql.=' ORDER BY IF(updated IS NOT NULL, updated, created) DESC';
 				break;
 			case 'favorites':
-				$sortsql = ", ^userfavorites".$sortsql." AND ^posts.postid=^userfavorites.entityid AND ^userfavorites.userid=".mysql_escape_string($userid)." AND ^userfavorites.entitytype='".mysql_escape_string(QA_ENTITY_QUESTION)."' ORDER BY IF(created > updated, created, updated) DESC";
+				$sortsql = ", ^userfavorites".$sortsql." AND ^posts.postid=^userfavorites.entityid AND ^userfavorites.userid=".mysql_escape_string($userid)." AND ^userfavorites.entitytype='".mysql_escape_string(QA_ENTITY_QUESTION)."' ORDER BY IF(updated IS NOT NULL, updated, created) DESC";
 				break;
 			case 'created':
 			case 'hotness':
