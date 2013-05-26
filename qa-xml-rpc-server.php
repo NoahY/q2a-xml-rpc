@@ -199,7 +199,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$qarray = qa_db_read_all_assoc(
 				qa_db_query_sub(
 					"SELECT * FROM ^posts".$sortsql." LIMIT #,#",
-					+1
+					$start,$size+1
 				)
 			);
 		
@@ -561,11 +561,27 @@ class q2a_xmlrpc_server extends IXR_Server {
 	function get_updated_qs($count) {
 		$userid = qa_get_logged_in_userid();
 
+		$selectspec['columns']['content']='^posts.content';
+		$selectspec['columns']['notify']='^posts.notify';
+		$selectspec['columns']['updated']='UNIX_TIMESTAMP(^posts.updated)';
+		$selectspec['columns']['updatetype']='^posts.updatetype';
+		$selectspec['columns'][]='^posts.format';
+		$selectspec['columns'][]='^posts.lastuserid';
+		$selectspec['columns']['lastip']='INET_NTOA(^posts.lastip)';
+		$selectspec['columns'][]='^posts.parentid';
+		$selectspec['columns']['lastviewip']='INET_NTOA(^posts.lastviewip)';
+
+
+		$aselspec = qa_db_recent_a_qs_selectspec($userid, 0, array()),
+		$aselspec = $aselspec+$selectspec
+
+		$cselspec = qa_db_recent_edit_qs_selectspec($userid, 0, array())
+		$cselspec = $cselspec+$selectspec
+
 		@list($questions1, $questions2, $questions3, $questions4)=qa_db_select_with_pending(
-			qa_db_qs_selectspec($userid, 'created', 0, null, null, false, false, $count),
-			qa_db_recent_a_qs_selectspec($userid, 0, array()),
-			qa_db_recent_c_qs_selectspec($userid, 0, array()),
-			qa_db_recent_edit_qs_selectspec($userid, 0, array())
+			qa_db_qs_selectspec($userid, 'created', 0, null, null, false, true, $count),
+			$aselspec,
+			$cselspec
 		);
 		$qarray = qa_any_sort_and_dedupe(array_merge($questions1, $questions2, $questions3, $questions4)); // questions
 
