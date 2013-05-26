@@ -419,8 +419,18 @@ class q2a_xmlrpc_server extends IXR_Server {
 	
 	function get_full_post($post, $options, $usershtml) {
 		$fields['raw'] = $post;
-		$postid = $post['postid'];
 		$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
+		$userid = qa_get_logged_in_userid();
+
+		$postid=$post['postid'];
+		$isquestion=($post['basetype']=='Q');
+		$isanswer=($post['basetype']=='A');
+		$isbyuser=qa_post_is_by_user($post, $userid, $cookieid);
+		$anchor=urlencode(qa_anchor($post['basetype'], $postid));
+		$elementid=isset($options['elementid']) ? $options['elementid'] : $anchor;
+		$microformats=false;
+		$isselected=@$options['isselected'];
+
 
 		// content
 		
@@ -434,8 +444,6 @@ class q2a_xmlrpc_server extends IXR_Server {
 			));
 		}
 
-		$isbyuser = $post['isbyuser'];
-		
 		if ($post['hidden'])
 			$fields['vote_state']='disabled';
 		elseif ($isbyuser)
