@@ -434,7 +434,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 			));
 		}
 
-		$isbyuser = $post['raw']['isbyuser'];
+		$isbyuser = $post['isbyuser'];
 		
 		if ($post['hidden'])
 			$fields['vote_state']='disabled';
@@ -541,7 +541,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		
 		
 		$fields['avatar'] = $this->get_post_avatar($post);
-		
+		return $fields
 	}
 	
 	function get_updated_qs($count) {
