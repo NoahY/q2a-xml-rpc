@@ -172,8 +172,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$qarray = $this->get_updated_qs($size);
 		else {
 		
-			$sortsql = ", ^uservotes WHERE type='Q'";
-		
+			$sortsql = "";
+			$tables = "";
 			switch ($sort) {
 				case 'acount':
 				case 'flagcount':
@@ -185,7 +185,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 					// fudge
 					break;
 				case 'favorites':
-					$sortsql = ", ^userfavorites".$sortsql." AND ^posts.postid=^userfavorites.entityid AND ^userfavorites.userid=".mysql_real_escape_string($userid)." AND ^userfavorites.entitytype='".mysql_real_escape_string(QA_ENTITY_QUESTION)."'";
+					$tables = " ^userfavorites";
+					$sortsql = " AND ^posts.postid=^userfavorites.entityid AND ^userfavorites.userid=".mysql_real_escape_string($userid)." AND ^userfavorites.entitytype='".mysql_real_escape_string(QA_ENTITY_QUESTION)."'";
 					$ordersql = " ORDER BY created DESC";
 					break;
 				case 'created':
@@ -198,7 +199,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 			}
 			$qarray = qa_db_read_all_assoc(
 				qa_db_query_sub(
-					"SELECT ^posts.*, LEFT(^posts.type, 1) AS basetype, UNIX_TIMESTAMP(^posts.created) AS created, ^uservotes.vote as uservote FROM ^posts".$sortsql." LEFT JOIN ^uservotes ON ^posts.postid=^uservotes.postid AND ^uservotes.userid=$".$ordersql." LIMIT #,#",
+					"SELECT ^posts.*, LEFT(^posts.type, 1) AS basetype, UNIX_TIMESTAMP(^posts.created) AS created, ^uservotes.vote as uservote FROM ^posts, ^uservotes".$tables." LEFT JOIN ^uservotes ON ^posts.postid=^uservotes.postid AND ^uservotes.userid=$ AND ^posts.type='Q'".$sortsql.$ordersql." LIMIT #,#",
 					$userid,$start,$size+1
 				)
 			);
