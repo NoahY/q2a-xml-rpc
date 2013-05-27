@@ -172,24 +172,25 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$qarray = $this->get_updated_qs($size);
 		else {
 		
-			$sortsql = " WHERE type='Q'";
+			$sortsql = ", ^uservotes WHERE type='Q'";
 		
 			switch ($sort) {
 				case 'acount':
 				case 'flagcount':
 				case 'netvotes':
 				case 'views':
-					$sortsql.=' ORDER BY '.$sort.' DESC, created DESC';
+					$odersql =' ORDER BY '.$sort.' DESC, created DESC';
 					break;
 				case 'updated':
 					// fudge
 					break;
 				case 'favorites':
-					$sortsql = ", ^userfavorites".$sortsql." AND ^posts.postid=^userfavorites.entityid AND ^userfavorites.userid=".mysql_real_escape_string($userid)." AND ^userfavorites.entitytype='".mysql_real_escape_string(QA_ENTITY_QUESTION)."' ORDER BY created DESC";
+					$sortsql = ", ^userfavorites".$sortsql." AND ^posts.postid=^userfavorites.entityid AND ^userfavorites.userid=".mysql_real_escape_string($userid)." AND ^userfavorites.entitytype='".mysql_real_escape_string(QA_ENTITY_QUESTION)."'";
+					$ordersql = " ORDER BY created DESC";
 					break;
 				case 'created':
 				case 'hotness':
-					$sortsql.=' ORDER BY '.$sort.' DESC';
+					$ordersql =' ORDER BY '.$sort.' DESC';
 					break;
 					
 				default:
@@ -197,8 +198,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 			}
 			$qarray = qa_db_read_all_assoc(
 				qa_db_query_sub(
-					"SELECT *, LEFT(^posts.type, 1) AS basetype, UNIX_TIMESTAMP(^posts.created) AS created FROM ^posts".$sortsql." LIMIT #,#",
-					$start,$size+1
+					"SELECT ^posts.*, LEFT(^posts.type, 1) AS basetype, UNIX_TIMESTAMP(^posts.created) AS created, ^uservotes.vote as uservote FROM ^posts".$sortsql." LEFT JOIN ^uservotes ON ^posts.postid=^uservotes.postid AND ^uservotes.userid=$".$ordersql." LIMIT #,#",
+					$userid,$start,$size+1
 				)
 			);
 		}
