@@ -574,23 +574,22 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$selectspec['columns']['lastviewip']='INET_NTOA(^posts.lastviewip)';
 		$selectspec['columns']['uservote']='^uservotes.vote';
 		$selectspec['columns']['userflag']='^uservotes.flag';
-		$selectspec['arguments'][]=$userid;
 
 		$aselspec = qa_db_recent_a_qs_selectspec($userid, 0, array());
 		$aselspec = array_merge($aselspec,$selectspec);
 
-		$aselspec['source'].=' LEFT JOIN ^uservotes ON ^posts.postid=^uservotes.postid AND ^uservotes.userid=$';
+		$aselspec['source'].=' LEFT JOIN ^uservotes ON ^posts.postid=^uservotes.postid AND ^uservotes.userid='.mysql_real_escape_string($userid);
 
 
 		$cselspec = qa_db_recent_edit_qs_selectspec($userid, 0, array());
 		$cselspec = array_merge($cselspec,$selectspec);
 
-		$cselspec['source'].=' LEFT JOIN ^uservotes ON ^posts.postid=^uservotes.postid AND ^uservotes.userid=$';
+		$cselspec['source'].=' LEFT JOIN ^uservotes ON ^posts.postid=^uservotes.postid AND ^uservotes.userid=$'.mysql_real_escape_string($userid);
 
 		$eselspec = qa_db_recent_edit_qs_selectspec($userid, 0, array());
 		$eselspec = array_merge($eselspec,$selectspec);
 
-		$eselspec['source'].=' LEFT JOIN ^uservotes ON ^posts.postid=^uservotes.postid AND ^uservotes.userid=$';
+		$eselspec['source'].=' LEFT JOIN ^uservotes ON ^posts.postid=^uservotes.postid AND ^uservotes.userid=$'.mysql_real_escape_string($userid);
 
 
 		@list($questions1, $questions2, $questions3, $questions4)=qa_db_select_with_pending(
