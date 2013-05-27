@@ -573,13 +573,13 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$selectspec['columns'][]='^posts.parentid';
 		$selectspec['columns']['lastviewip']='INET_NTOA(^posts.lastviewip)';
 
-		$aselspec = qa_db_recent_a_qs_selectspec($userid, 0, array());
+		$aselspec = qa_db_recent_a_qs_selectspec($userid, 0, null, null, false, false, $count);
 		$aselspec = array_merge($aselspec,$selectspec);
 
-		$cselspec = qa_db_recent_edit_qs_selectspec($userid, 0, array());
+		$cselspec = qa_db_recent_edit_qs_selectspec($userid, 0, null, null, false, false, $count);
 		$cselspec = array_merge($cselspec,$selectspec);
 
-		$eselspec = qa_db_recent_edit_qs_selectspec($userid, 0, array());
+		$eselspec = qa_db_recent_edit_qs_selectspec($userid, 0, null, null, false, false, $count);
 		$eselspec = array_merge($eselspec,$selectspec);
 
 		@list($questions1, $questions2, $questions3, $questions4)=qa_db_select_with_pending(
