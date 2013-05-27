@@ -589,7 +589,6 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$cselspec['columns']['lastviewip']='INET_NTOA(^posts.lastviewip)';
 
 		$eselspec = qa_db_recent_edit_qs_selectspec($userid, 0, null, null, false, false, $count);
-		$eselspec = array_merge($eselspec,$selectspec);
 
 		$eselspec['columns']['content']='^posts.content';
 		$eselspec['columns']['notify']='^posts.notify';
