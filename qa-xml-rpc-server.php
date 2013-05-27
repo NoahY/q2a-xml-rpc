@@ -574,17 +574,24 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$selectspec['columns']['lastviewip']='INET_NTOA(^posts.lastviewip)';
 		$selectspec['columns']['uservote']='^uservotes.vote';
 		$selectspec['columns']['userflag']='^uservotes.flag';
-		$selectspec['source'].=' LEFT JOIN ^uservotes ON ^posts.postid=^uservotes.postid AND ^uservotes.userid=$';
 		$selectspec['arguments'][]=$userid;
 
 		$aselspec = qa_db_recent_a_qs_selectspec($userid, 0, array());
 		$aselspec = array_merge($aselspec,$selectspec);
 
+		$aselspec['source'].=' LEFT JOIN ^uservotes ON ^posts.postid=^uservotes.postid AND ^uservotes.userid=$';
+
+
 		$cselspec = qa_db_recent_edit_qs_selectspec($userid, 0, array());
 		$cselspec = array_merge($cselspec,$selectspec);
 
+		$cselspec['source'].=' LEFT JOIN ^uservotes ON ^posts.postid=^uservotes.postid AND ^uservotes.userid=$';
+
 		$eselspec = qa_db_recent_edit_qs_selectspec($userid, 0, array());
 		$eselspec = array_merge($eselspec,$selectspec);
+
+		$eselspec['source'].=' LEFT JOIN ^uservotes ON ^posts.postid=^uservotes.postid AND ^uservotes.userid=$';
+
 
 		@list($questions1, $questions2, $questions3, $questions4)=qa_db_select_with_pending(
 			qa_db_qs_selectspec($userid, 'created', 0, null, null, false, true, $count),
