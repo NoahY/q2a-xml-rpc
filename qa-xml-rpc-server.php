@@ -572,7 +572,10 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$selectspec['columns']['lastip']='INET_NTOA(^posts.lastip)';
 		$selectspec['columns'][]='^posts.parentid';
 		$selectspec['columns']['lastviewip']='INET_NTOA(^posts.lastviewip)';
-
+		$selectspec['columns']['uservote']='^uservotes.vote';
+		$selectspec['columns']['userflag']='^uservotes.flag';
+		$selectspec['source'].=' LEFT JOIN ^uservotes ON ^posts.postid=^uservotes.postid AND ^uservotes.userid=$';
+		$selectspec['arguments'][]=$userid;
 
 		$aselspec = qa_db_recent_a_qs_selectspec($userid, 0, array());
 		$aselspec = array_merge($aselspec,$selectspec);
