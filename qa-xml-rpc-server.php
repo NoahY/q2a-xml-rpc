@@ -199,7 +199,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 			}
 			$qarray = qa_db_read_all_assoc(
 				qa_db_query_sub(
-					"SELECT ^posts.*, LEFT(^posts.type, 1) AS basetype, UNIX_TIMESTAMP(^posts.created) AS created, ^uservotes.vote as uservote FROM ^posts".$tables." LEFT JOIN ^uservotes ON ^posts.postid=^uservotes.postid AND ^uservotes.userid=$ AND ^posts.type='Q'".$sortsql.$ordersql." LIMIT #,#",
+					"SELECT ^posts.*, LEFT(^posts.type, 1) AS basetype, UNIX_TIMESTAMP(^posts.created) AS created, ^uservotes.vote as uservote FROM ^posts".$tables." LEFT JOIN ^uservotes ON ^posts.postid=^uservotes.postid AND ^uservotes.userid=$ WHERE ^posts.type='Q'".$sortsql.$ordersql." LIMIT #,#",
 					$userid,$start,$size+1
 				)
 			);
