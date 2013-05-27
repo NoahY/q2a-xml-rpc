@@ -167,41 +167,41 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$sort = @$data['sort'];
 		$start = (int)@$data['start'];
 		$size = (int)@$data['size'];
-		
-		$sortsql = " WHERE type='Q'";
-		
-		
-		switch ($sort) {
-			case 'acount':
-			case 'flagcount':
-			case 'netvotes':
-			case 'views':
-				$sortsql.=' ORDER BY '.$sort.' DESC, created DESC';
-				break;
-			case 'updated':
-				// fudge
-				break;
-			case 'favorites':
-				$sortsql = ", ^userfavorites".$sortsql." AND ^posts.postid=^userfavorites.entityid AND ^userfavorites.userid=".mysql_real_escape_string($userid)." AND ^userfavorites.entitytype='".mysql_real_escape_string(QA_ENTITY_QUESTION)."' ORDER BY created DESC";
-				break;
-			case 'created':
-			case 'hotness':
-				$sortsql.=' ORDER BY '.$sort.' DESC';
-				break;
-				
-			default:
-				return new IXR_Error( 405, qa_lang('xmlrpc/error'));
-		}
-		
+
 		if($sort == 'updated')
 			$qarray = $this->get_updated_qs($size);
-		else
+		else {
+		
+			$sortsql = " WHERE type='Q'";
+		
+			switch ($sort) {
+				case 'acount':
+				case 'flagcount':
+				case 'netvotes':
+				case 'views':
+					$sortsql.=' ORDER BY '.$sort.' DESC, created DESC';
+					break;
+				case 'updated':
+					// fudge
+					break;
+				case 'favorites':
+					$sortsql = ", ^userfavorites".$sortsql." AND ^posts.postid=^userfavorites.entityid AND ^userfavorites.userid=".mysql_real_escape_string($userid)." AND ^userfavorites.entitytype='".mysql_real_escape_string(QA_ENTITY_QUESTION)."' ORDER BY created DESC";
+					break;
+				case 'created':
+				case 'hotness':
+					$sortsql.=' ORDER BY '.$sort.' DESC';
+					break;
+					
+				default:
+					return new IXR_Error( 405, qa_lang('xmlrpc/error'));
+			}
 			$qarray = qa_db_read_all_assoc(
 				qa_db_query_sub(
-					"SELECT * FROM ^posts".$sortsql." LIMIT #,#",
+					"SELECT *, LEFT(^posts.type, 1) AS basetype, UNIX_TIMESTAMP(^posts.created) AS created FROM ^posts".$sortsql." LIMIT #,#",
 					$start,$size+1
 				)
 			);
+		}
 		
 		$more = false;
 		if(count($qarray) > $size) {
