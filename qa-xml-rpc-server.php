@@ -429,6 +429,10 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
 		$userid = qa_get_logged_in_userid();
 
+		// backwards compatibility (TODO: remove from android)
+
+		$fields['netvotes_raw']=$post['netvotes'];
+
 		$postid=$post['postid'];
 		$isquestion=($post['basetype']=='Q');
 		$isanswer=($post['basetype']=='A');
