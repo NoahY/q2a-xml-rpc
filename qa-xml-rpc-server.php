@@ -370,9 +370,9 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 			foreach ($allcomments as $idx => $comment) {
 				if ($comment['basetype']=='C')
-					$comment = qa_post_html_fields($comment, $userid, $cookieid, $usershtml, null, $coptions);
+					$comment = $this->get_full_post($comment, $coptions, $usershtml);
 				else
-					$comment = qa_post_html_fields($comment, $userid, $cookieid, $usershtml, null, $options);
+					$comment = $this->get_full_post($comment, $options, $usershtml);
 
 				$comment['username'] = $this->get_username($comment['raw']['userid']);
 					
@@ -386,7 +386,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$outanswers = array();
 			foreach($answers as $answer) {
 				$aoptions['isselected']=@$answer['isselected'];
-				$answer = qa_post_html_fields($answer, $userid, $cookieid, $usershtml, null, $aoptions);
+				$answer = $this->get_full_post($answer, $aoptions, $usershtml);
 				if(!$answer)
 					continue;
 				$answer['avatar'] = $this->get_post_avatar($answer['raw']);
