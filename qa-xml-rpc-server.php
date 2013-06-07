@@ -431,7 +431,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 		// backwards compatibility (TODO: remove from android)
 
-		$fields['netvotes_raw']=$post['netvotes'];
+		$fields['netvotes_raw']=(int)$post['netvotes'];
 
 		$postid=$post['postid'];
 		$isquestion=($post['basetype']=='Q');
