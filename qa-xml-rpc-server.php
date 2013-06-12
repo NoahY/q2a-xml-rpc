@@ -248,6 +248,104 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 
 	/**
+	 * Call to Get Single Question.
+	 *
+	 * @param array $args ($username, $password, $data['postid', 'action', 'action_id', 'action_data'])
+	 * @return array (questions);
+	 * 
+	 */
+	function call_get_question( $args ) {
+	
+		if ( !qa_opt( 'xml_rpc_bool_get_questions' ) )
+			return new IXR_Error( 405, qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/getting_questions') ));
+
+		// Parse the arguments, assuming they're in the correct order
+		$username = mysql_real_escape_string( $args[0] );
+		$password   = mysql_real_escape_string( $args[1] );
+		$data = @$args[2];
+
+		if ( !$this->login( $username, $password ) )
+			return $this->error;
+
+		$userid = qa_get_logged_in_userid();
+		$output = array();
+		
+		if(!$data['postid'])
+			return new IXR_Error( 1550, qa_lang('xmlrpc/content_missing') );
+				
+		if(isset($data['action'])) {
+			$output['action_success'] = false;
+			switch($data['action']) {
+				case 'vote':
+					$type = @$data['action_data']['type'];
+					$vote = @$data['action_data']['vote'];
+		
+					switch(true) {
+						case ($type == 'Q' && $vote > 0 && !qa_opt( 'xml_rpc_bool_q_upvote' )):
+							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/upvoting_questions') );
+							break 2;
+						case ($type == 'Q' && $vote == 0 && !qa_opt( 'xml_rpc_bool_q_unvote' )):
+							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/unvoting_questions') );
+							break 2;
+						case ($type == 'Q' && $vote < 0 && !qa_opt( 'xml_rpc_bool_q_downvote' )):
+							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/downvoting_questions') );
+							break 2;
+						case ($type == 'A' && $vote > 0 && !qa_opt( 'xml_rpc_bool_a_upvote' )):
+							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/upvoting_questions') );
+							break 2;
+						case ($type == 'A' && $vote == 0 && !qa_opt( 'xml_rpc_bool_a_unvote' )):
+							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/unvoting_questions') );
+							break 2;
+						case ($type == 'A' && $vote < 0 && !qa_opt( 'xml_rpc_bool_a_downvote' )):
+							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/downvoting_questions') );
+							break 2;
+					}	
+
+					$output['action_success'] = $this->do_vote($data);
+					break;
+				case 'post':
+					$output['action_success'] = $this->do_post($data);
+					break;
+				case 'favorite':
+					$output['action_success'] = $this->do_favorite($data);
+					break;
+				case 'select':
+					$output['action_success'] = $this->do_select($data);
+					break;
+			}
+		}
+
+		if(isset($data['action_id']) && $data['postid'] == $data['action_id'])
+			$output['acted'] = $data['postid'];
+
+
+		$question = qa_db_read_one_assoc(
+			qa_db_query_sub(
+				"SELECT *, LEFT(^posts.b, 1) AS basetype, UNIX_TIMESTAMP(^posts.created) AS created, ^uservotes.vote as uservote FROM ^posts".$tables." LEFT JOIN ^uservotes ON ^posts.postid=^uservotes.postid AND ^uservotes.userid=$ WHERE ^posts.type='Q' AND ^posts.postid=$",
+				$userid, $data['postid']
+			),
+			true
+		);
+
+		if($question) {
+			$output['data'] = $this->get_single_question($data, $question);
+			$output['message'] = qa_lang( 'xmlrpc/question_found');
+		$output['confirmation'] = true;
+		}
+		else {
+			$output['confirmation'] = false;
+			$output['message'] = qa_lang( 'xmlrpc/no_items_found' );
+		}
+
+		if(isset($data['meta']))
+			$output['meta'] = $this->get_meta_data();
+
+		return $output;
+
+	}
+
+
+	/**
 	 * Vote Call.
 	 *
 	 * @param array $args ($username, $password, $data['sort', 'start', 'cats', 'full', 'size', 'action', 'action_id', 'action_data'])
@@ -304,10 +402,22 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 		if($output['confirmation']) {
 			$output['message'] = qa_lang( 'xmlrpc/voted' );
+			$output['confirmation'] = true;
 			$info = @$data['action_data'];
 			$questionid = (int)@$info['questionid'];
-			if($questionid)
-				$output['data'] = get_single_question($data, $data);
+			if($questionid) {
+				$question = qa_db_read_one_assoc(
+					qa_db_query_sub(
+						"SELECT *, LEFT(^posts.b, 1) AS basetype, UNIX_TIMESTAMP(^posts.created) AS created, ^uservotes.vote as uservote FROM ^posts".$tables." LEFT JOIN ^uservotes ON ^posts.postid=^uservotes.postid AND ^uservotes.userid=$ WHERE ^posts.type='Q' AND ^posts.postid=$",
+						$userid, $questionid
+					),
+					true
+				);
+
+				if($question) {
+					$output['data'] = $this->get_single_question($data, $question);
+				}
+			}
 		}
 		else
 			$output['message'] = qa_lang( 'xmlrpc/vote_error' );

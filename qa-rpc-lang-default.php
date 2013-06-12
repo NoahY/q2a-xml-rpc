@@ -41,11 +41,14 @@
 		
 		'xmlrpc_access' => 'Access site via XML-RPC',
 		
+		'content_missing' => 'Invalid request - content missing.',
+		
 		
 		'hello_x' => 'Hello, ^.',
 		
 		'no_items_found' => 'No items found.',
 		'x_items_found' => 'Retrieved ^ items.',
+		'question_found' => 'Retrieved question.',
 		
 		'voted' => 'Voted successfully.',
 		'vote_error' => 'Error submitting vote.',
