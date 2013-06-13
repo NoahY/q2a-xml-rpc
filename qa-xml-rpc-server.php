@@ -274,6 +274,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 			return new IXR_Error( 1550, qa_lang('xmlrpc/content_missing') );
 				
 		if(isset($data['action'])) {
+			$action_message = qa_lang( 'xmlrpc/action_failed' );
 			$output['action_success'] = false;
 			switch($data['action']) {
 				case 'vote':
@@ -302,15 +303,23 @@ class q2a_xmlrpc_server extends IXR_Server {
 					}	
 
 					$output['action_success'] = $this->do_vote($data);
+					if($output['action_success'])
+						$action_message = qa_lang( 'xmlrpc/vote_success' );
 					break;
 				case 'post':
 					$output['action_success'] = $this->do_post($data);
+					if($output['action_success'])
+						$action_message = qa_lang( 'xmlrpc/post_success' );
 					break;
 				case 'favorite':
 					$output['action_success'] = $this->do_favorite($data);
+					if($output['action_success'])
+						$action_message = qa_lang( 'xmlrpc/favorite_success' );
 					break;
 				case 'select':
 					$output['action_success'] = $this->do_select($data);
+					if($output['action_success'])
+						$action_message = qa_lang( 'xmlrpc/select_success' );
 					break;
 			}
 		}
@@ -329,8 +338,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 		if($question) {
 			$output['data'] = $this->get_single_question($data, $question);
-			$output['message'] = qa_lang( 'xmlrpc/question_found');
-		$output['confirmation'] = true;
+			$output['message'] = isset($data['action'])?$action_message:qa_lang( 'xmlrpc/question_found');
+			$output['confirmation'] = true;
 		}
 		else {
 			$output['confirmation'] = false;
@@ -537,8 +546,6 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$fields['raw'] = $post;
 		$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
 		$userid = qa_get_logged_in_userid();
-
-		// backwards compatibility (TODO: remove from android)
 
 		$fields['netvotes_raw']=(int)$post['netvotes'];
 
@@ -762,12 +769,12 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$fields['what_2']=qa_lang_html($langstring);
 			
 			if (@$options['whenview']) {
-				$fields['when']=qa_when_to_html($post['updated'], @$options['fulldatedays']);
+				$fields['when_2']=qa_when_to_html($post['updated'], @$options['fulldatedays']);
 				
 			}
 			
 			if (isset($post['lastuserid']) && @$options['whoview'])
-				$fields['who']=qa_who_to_html(isset($userid) && ($post['lastuserid']==$userid), $post['lastuserid'], $usershtml, @$options['ipview'] ? $post['lastip'] : null, false);
+				$fields['who_2']=qa_who_to_html(isset($userid) && ($post['lastuserid']==$userid), $post['lastuserid'], $usershtml, @$options['ipview'] ? $post['lastip'] : null, false);
 		}
 				
 		$fields['avatar'] = $this->get_post_avatar($post);
