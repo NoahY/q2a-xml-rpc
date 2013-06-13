@@ -499,7 +499,6 @@ class q2a_xmlrpc_server extends IXR_Server {
 				$answer = $this->get_full_post($answer, $aoptions, $usershtml);
 				if(!$answer)
 					continue;
-				$answer['avatar'] = $this->get_post_avatar($answer['raw']);
 				$answer['username'] = $this->get_username($answer['raw']['userid']);
 				
 				$acomments = array();
@@ -795,7 +794,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$aselspec['columns']['lastviewip']='INET_NTOA(^posts.lastviewip)';
 
 
-		$cselspec = qa_db_recent_edit_qs_selectspec($userid, 0, null, null, false, false, $count);
+		$cselspec = qa_db_recent_c_qs_selectspec($userid, 0, null, null, false, false, $count);
 
 		$cselspec['columns']['content']='^posts.content';
 		$cselspec['columns']['notify']='^posts.notify';
