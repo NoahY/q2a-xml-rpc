@@ -206,7 +206,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		}
 		
 		$more = false;
-		if(count($qarray) > $size) {
+		if(count($qarray) > $size && $sort != 'updated') {
 			$more = true;
 			array_pop($qarray);
 		}
