@@ -667,7 +667,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 			if (isset($post['lastuserid']) && @$options['whoview'])
 				$fields['who_2']=qa_who_to_html(isset($userid) && ($post['lastuserid']==$userid), $post['lastuserid'], $usershtml, @$options['ipview'] ? $post['lastip'] : null, false);
 		}
-		else if (
+		
+		if (
 			@$options['updateview'] && isset($post['updated'])
 		) {
 
