@@ -615,7 +615,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		
 	//	Updated when and by whom
 
-		if (isset($question['opostid'])) {
+		if (isset($post['opostid'])) {
 			// updated meta
 			
 			switch ($post['obasetype'].'-'.@$post['oupdatetype']) {
