@@ -610,10 +610,61 @@ class q2a_xmlrpc_server extends IXR_Server {
 				$fields['who']['level']=qa_html(qa_user_level_string($post['level']));
 		}
 
+
+	//	Updated when and by whom
+		$isselected=@$options['isselected'];
 		
 		if (
-			@$options['updateview'] && isset($post['updated'])
+			@$options['updateview'] && isset($post['updated']) &&
+			(($post['updatetype']!=QA_UPDATE_SELECTED) || $isselected) && // only show selected change if it's still selected
+			( // otherwise check if one of these conditions is fulfilled...
+				(!isset($post['created'])) || // ... we didn't show the created time (should never happen in practice)
+				($post['hidden'] && ($post['updatetype']==QA_UPDATE_VISIBLE)) || // ... the post was hidden as the last action
+				(isset($post['closedbyid']) && ($post['updatetype']==QA_UPDATE_CLOSED)) || // ... the post was closed as the last action
+				(abs($post['updated']-$post['created'])>300) || // ... or over 5 minutes passed between create and update times
+				($post['lastuserid']!=$post['userid']) // ... or it was updated by a different user
+			)
 		) {
+			switch ($post['updatetype']) {
+				case QA_UPDATE_TYPE:
+				case QA_UPDATE_PARENT:
+					$langstring='main/moved';
+					break;
+					
+				case QA_UPDATE_CATEGORY:
+					$langstring='main/recategorized';
+					break;
+
+				case QA_UPDATE_VISIBLE:
+					$langstring=$post['hidden'] ? 'main/hidden' : 'main/reshown';
+					break;
+					
+				case QA_UPDATE_CLOSED:
+					$langstring=isset($post['closedbyid']) ? 'main/closed' : 'main/reopened';
+					break;
+					
+				case QA_UPDATE_TAGS:
+					$langstring='main/retagged';
+					break;
+				
+				case QA_UPDATE_SELECTED:
+					$langstring='main/selected';
+					break;
+				
+				default:
+					$langstring='main/edited';
+					break;
+			}
+			
+			$fields['what_2']=qa_lang_html($langstring);
+			
+			if (@$options['whenview']) {
+				$fields['when_2']=qa_when_to_html($post['updated'], @$options['fulldatedays']);
+				
+			}
+			
+			if (isset($post['lastuserid']) && @$options['whoview'])
+				$fields['who_2']=qa_who_to_html(isset($userid) && ($post['lastuserid']==$userid), $post['lastuserid'], $usershtml, @$options['ipview'] ? $post['lastip'] : null, false);
 
 			// updated meta
 			
