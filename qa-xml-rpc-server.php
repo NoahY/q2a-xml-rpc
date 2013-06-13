@@ -669,107 +669,119 @@ class q2a_xmlrpc_server extends IXR_Server {
 		}
 */
 
-		// updated meta
-		
-		switch ($post['obasetype'].'-'.@$post['oupdatetype']) {
-			case 'Q-':
-				$langstring='main/asked';
-				break;
-			
-			case 'Q-'.QA_UPDATE_VISIBLE:
-				$langstring=$post['hidden'] ? 'main/hidden' : 'main/reshown';
-				break;
-				
-			case 'Q-'.QA_UPDATE_CLOSED:
-				$langstring=isset($post['closedbyid']) ? 'main/closed' : 'main/reopened';
-				break;
-				
-			case 'Q-'.QA_UPDATE_TAGS:
-				$langstring='main/retagged';
-				break;
-				
-			case 'Q-'.QA_UPDATE_CATEGORY:
-				$langstring='main/recategorized';
-				break;
+		if (
+			@$options['updateview'] && isset($post['updated']) &&
+			(($post['updatetype']!=QA_UPDATE_SELECTED) || $isselected) && // only show selected change if it's still selected
+			( // otherwise check if one of these conditions is fulfilled...
+				(!isset($post['created'])) || // ... we didn't show the created time (should never happen in practice)
+				($post['hidden'] && ($post['updatetype']==QA_UPDATE_VISIBLE)) || // ... the post was hidden as the last action
+				(isset($post['closedbyid']) && ($post['updatetype']==QA_UPDATE_CLOSED)) || // ... the post was closed as the last action
+				(abs($post['updated']-$post['created'])>300) || // ... or over 5 minutes passed between create and update times
+				($post['lastuserid']!=$post['userid']) // ... or it was updated by a different user
+			)
+		) {
 
-			case 'A-':
-				$langstring='main/answered';
-				break;
+			// updated meta
 			
-			case 'A-'.QA_UPDATE_SELECTED:
-				$langstring='main/answer_selected';
-				break;
-			
-			case 'A-'.QA_UPDATE_VISIBLE:
-				$langstring=$post['ohidden'] ? 'main/hidden' : 'main/answer_reshown';
-				break;
+			switch ($post['obasetype'].'-'.@$post['oupdatetype']) {
+				case 'Q-':
+					$langstring='main/asked';
+					break;
 				
-			case 'A-'.QA_UPDATE_CONTENT:
-				$langstring='main/answer_edited';
-				break;
-				
-			case 'Q-'.QA_UPDATE_FOLLOWS:
-				$langstring='main/asked_related_q';
-				break;
-			
-			case 'C-':
-				$langstring='main/commented';
-				break;
-			
-			case 'C-'.QA_UPDATE_TYPE:
-				$langstring='main/comment_moved';
-				break;
-				
-			case 'C-'.QA_UPDATE_VISIBLE:
-				$langstring=$post['ohidden'] ? 'main/hidden' : 'main/comment_reshown';
-				break;
-				
-			case 'C-'.QA_UPDATE_CONTENT:
-				$langstring='main/comment_edited';
-				break;
-			
-			case 'Q-'.QA_UPDATE_CONTENT:
-			default:
-				$langstring='main/edited';
-				break;
-		}
-		
-		$fields['what']=qa_lang_html($langstring);
-			
-		if ( ($post['obasetype']!='Q') || (@$post['oupdatetype']==QA_UPDATE_FOLLOWS) )
-			$fields['what_url']=qa_q_path_html($post['postid'], $post['title'], false, $post['obasetype'], $post['opostid']);
+				case 'Q-'.QA_UPDATE_VISIBLE:
+					$langstring=$post['hidden'] ? 'main/hidden' : 'main/reshown';
+					break;
+					
+				case 'Q-'.QA_UPDATE_CLOSED:
+					$langstring=isset($post['closedbyid']) ? 'main/closed' : 'main/reopened';
+					break;
+					
+				case 'Q-'.QA_UPDATE_TAGS:
+					$langstring='main/retagged';
+					break;
+					
+				case 'Q-'.QA_UPDATE_CATEGORY:
+					$langstring='main/recategorized';
+					break;
 
-		if (@$options['contentview'] && !empty($post['ocontent'])) {
-			$viewer=qa_load_viewer($post['ocontent'], $post['oformat']);
-			
-			$fields['content']=$viewer->get_html($post['ocontent'], $post['oformat'], array(
-				'blockwordspreg' => @$options['blockwordspreg'],
-				'showurllinks' => @$options['showurllinks'],
-				'linksnewwindow' => @$options['linksnewwindow'],
-			));
-		}
-		
-		if (@$options['whenview'])
-			$fields['when']=qa_when_to_html($post['otime'], @$options['fulldatedays']);
-		
-		if (@$options['whoview']) {
-			$isbyuser=qa_post_is_by_user(array('userid' => $post['ouserid'], 'cookieid' => @$post['ocookieid']), $userid, $cookieid);
-		
-			$fields['who']=qa_who_to_html($isbyuser, $post['ouserid'], $usershtml, @$options['ipview'] ? @$post['oip'] : null, false);
-	
-			if (isset($post['opoints'])) {
-				if (@$options['pointsview'])
-					$fields['who']['points']=($post['opoints']==1) ? qa_lang_html_sub_split('main/1_point', '1', '1')
-						: qa_lang_html_sub_split('main/x_points', qa_html(number_format($post['opoints'])));
-						
-				if (isset($options['pointstitle']))
-					$fields['who']['title']=qa_get_points_title_html($post['opoints'], $options['pointstitle']);
+				case 'A-':
+					$langstring='main/answered';
+					break;
+				
+				case 'A-'.QA_UPDATE_SELECTED:
+					$langstring='main/answer_selected';
+					break;
+				
+				case 'A-'.QA_UPDATE_VISIBLE:
+					$langstring=$post['ohidden'] ? 'main/hidden' : 'main/answer_reshown';
+					break;
+					
+				case 'A-'.QA_UPDATE_CONTENT:
+					$langstring='main/answer_edited';
+					break;
+					
+				case 'Q-'.QA_UPDATE_FOLLOWS:
+					$langstring='main/asked_related_q';
+					break;
+				
+				case 'C-':
+					$langstring='main/commented';
+					break;
+				
+				case 'C-'.QA_UPDATE_TYPE:
+					$langstring='main/comment_moved';
+					break;
+					
+				case 'C-'.QA_UPDATE_VISIBLE:
+					$langstring=$post['ohidden'] ? 'main/hidden' : 'main/comment_reshown';
+					break;
+					
+				case 'C-'.QA_UPDATE_CONTENT:
+					$langstring='main/comment_edited';
+					break;
+				
+				case 'Q-'.QA_UPDATE_CONTENT:
+				default:
+					$langstring='main/edited';
+					break;
 			}
+			
+			$fields['what']=qa_lang_html($langstring);
+				
+			if ( ($post['obasetype']!='Q') || (@$post['oupdatetype']==QA_UPDATE_FOLLOWS) )
+				$fields['what_url']=qa_q_path_html($post['postid'], $post['title'], false, $post['obasetype'], $post['opostid']);
 
-			if (isset($post['olevel']))
-				$fields['who']['level']=qa_html(qa_user_level_string($post['olevel']));
-		}
+			if (@$options['contentview'] && !empty($post['ocontent'])) {
+				$viewer=qa_load_viewer($post['ocontent'], $post['oformat']);
+				
+				$fields['content']=$viewer->get_html($post['ocontent'], $post['oformat'], array(
+					'blockwordspreg' => @$options['blockwordspreg'],
+					'showurllinks' => @$options['showurllinks'],
+					'linksnewwindow' => @$options['linksnewwindow'],
+				));
+			}
+			
+			if (@$options['whenview'])
+				$fields['when']=qa_when_to_html($post['otime'], @$options['fulldatedays']);
+			
+			if (@$options['whoview']) {
+				$isbyuser=qa_post_is_by_user(array('userid' => $post['ouserid'], 'cookieid' => @$post['ocookieid']), $userid, $cookieid);
+			
+				$fields['who']=qa_who_to_html($isbyuser, $post['ouserid'], $usershtml, @$options['ipview'] ? @$post['oip'] : null, false);
 		
+				if (isset($post['opoints'])) {
+					if (@$options['pointsview'])
+						$fields['who']['points']=($post['opoints']==1) ? qa_lang_html_sub_split('main/1_point', '1', '1')
+							: qa_lang_html_sub_split('main/x_points', qa_html(number_format($post['opoints'])));
+							
+					if (isset($options['pointstitle']))
+						$fields['who']['title']=qa_get_points_title_html($post['opoints'], $options['pointstitle']);
+				}
+
+				if (isset($post['olevel']))
+					$fields['who']['level']=qa_html(qa_user_level_string($post['olevel']));
+			}
+		}
 		
 		$fields['avatar'] = $this->get_post_avatar($post);
 		
