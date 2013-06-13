@@ -681,15 +681,15 @@ class q2a_xmlrpc_server extends IXR_Server {
 					break;
 			}
 			
-			$fields['what']=qa_lang_html($langstring);
+			$fields['what_2']=qa_lang_html($langstring);
 				
 			if ( ($post['obasetype']!='Q') || (@$post['oupdatetype']==QA_UPDATE_FOLLOWS) )
-				$fields['what_url']=qa_q_path_html($post['postid'], $post['title'], false, $post['obasetype'], $post['opostid']);
+				$fields['what_2_url']=qa_q_path_html($post['postid'], $post['title'], false, $post['obasetype'], $post['opostid']);
 
 			if (@$options['contentview'] && !empty($post['ocontent'])) {
 				$viewer=qa_load_viewer($post['ocontent'], $post['oformat']);
 				
-				$fields['content']=$viewer->get_html($post['ocontent'], $post['oformat'], array(
+				$fields['content_2']=$viewer->get_html($post['ocontent'], $post['oformat'], array(
 					'blockwordspreg' => @$options['blockwordspreg'],
 					'showurllinks' => @$options['showurllinks'],
 					'linksnewwindow' => @$options['linksnewwindow'],
@@ -697,24 +697,24 @@ class q2a_xmlrpc_server extends IXR_Server {
 			}
 			
 			if (@$options['whenview'])
-				$fields['when']=qa_when_to_html($post['otime'], @$options['fulldatedays']);
+				$fields['when_2']=qa_when_to_html($post['otime'], @$options['fulldatedays']);
 			
 			if (@$options['whoview']) {
 				$isbyuser=qa_post_is_by_user(array('userid' => $post['ouserid'], 'cookieid' => @$post['ocookieid']), $userid, $cookieid);
 			
-				$fields['who']=qa_who_to_html($isbyuser, $post['ouserid'], $usershtml, @$options['ipview'] ? @$post['oip'] : null, false);
+				$fields['who_2']=qa_who_to_html($isbyuser, $post['ouserid'], $usershtml, @$options['ipview'] ? @$post['oip'] : null, false);
 		
 				if (isset($post['opoints'])) {
 					if (@$options['pointsview'])
-						$fields['who']['points']=($post['opoints']==1) ? qa_lang_html_sub_split('main/1_point', '1', '1')
+						$fields['who_2']['points']=($post['opoints']==1) ? qa_lang_html_sub_split('main/1_point', '1', '1')
 							: qa_lang_html_sub_split('main/x_points', qa_html(number_format($post['opoints'])));
 							
 					if (isset($options['pointstitle']))
-						$fields['who']['title']=qa_get_points_title_html($post['opoints'], $options['pointstitle']);
+						$fields['who_2']['title']=qa_get_points_title_html($post['opoints'], $options['pointstitle']);
 				}
 
 				if (isset($post['olevel']))
-					$fields['who']['level']=qa_html(qa_user_level_string($post['olevel']));
+					$fields['who_2']['level']=qa_html(qa_user_level_string($post['olevel']));
 			}
 		}
 		else if (
@@ -762,12 +762,12 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$fields['what_2']=qa_lang_html($langstring);
 			
 			if (@$options['whenview']) {
-				$fields['when_2']=qa_when_to_html($post['updated'], @$options['fulldatedays']);
+				$fields['when']=qa_when_to_html($post['updated'], @$options['fulldatedays']);
 				
 			}
 			
 			if (isset($post['lastuserid']) && @$options['whoview'])
-				$fields['who_2']=qa_who_to_html(isset($userid) && ($post['lastuserid']==$userid), $post['lastuserid'], $usershtml, @$options['ipview'] ? $post['lastip'] : null, false);
+				$fields['who']=qa_who_to_html(isset($userid) && ($post['lastuserid']==$userid), $post['lastuserid'], $usershtml, @$options['ipview'] ? $post['lastip'] : null, false);
 		}
 				
 		$fields['avatar'] = $this->get_post_avatar($post);
