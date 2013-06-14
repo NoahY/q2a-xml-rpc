@@ -195,8 +195,10 @@ class q2a_xmlrpc_server extends IXR_Server {
 		
 		if(empty($questions))
 			$output['message'] = qa_lang( 'xmlrpc/no_items_found' );
+		else if(isset($data['action']))
+			$output['message'] = $action_message;
 		else
-			$output['message'] = isset($data['action'])?$action_message:qa_lang_sub( 'xmlrpc/x_items_found', count($questions) );
+			$output['message'] = qa_lang_sub( 'xmlrpc/x_items_found', count($questions) );
 		
 		if(isset($data['meta']))
 			$output['meta'] = $this->get_meta_data();
