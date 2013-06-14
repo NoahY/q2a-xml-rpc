@@ -123,7 +123,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$output = array();
 		
 		if(isset($data['action'])) {
-			$action_message = doAction($data);
+			$action_message = $this->doAction($data);
 		}
 
 		$sort = @$data['sort'];
