@@ -129,41 +129,14 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$sort = @$data['sort'];
 		$start = (int)@$data['start'];
 		$size = (int)@$data['size'];
+		$full = isset($data['full']);
 
 		if($sort == 'updated')
 			$qarray = $this->get_updated_qs($size);
 		else {
-		
-			$sortsql = "";
-			$tables = "";
-			switch ($sort) {
-				case 'acount':
-				case 'flagcount':
-				case 'netvotes':
-				case 'views':
-					$odersql =' ORDER BY '.$sort.' DESC, created DESC';
-					break;
-				case 'updated':
-					// fudge
-					break;
-				case 'favorites':
-					$tables = ", ^userfavorites";
-					$sortsql = " AND ^posts.postid=^userfavorites.entityid AND ^userfavorites.userid=".mysql_real_escape_string($userid)." AND ^userfavorites.entitytype='".mysql_real_escape_string(QA_ENTITY_QUESTION)."'";
-					$ordersql = " ORDER BY created DESC";
-					break;
-				case 'created':
-				case 'hotness':
-					$ordersql =' ORDER BY '.$sort.' DESC';
-					break;
-					
-				default:
-					return new IXR_Error( 405, qa_lang('xmlrpc/error'));
-			}
-			$qarray = qa_db_read_all_assoc(
-				qa_db_query_sub(
-					"SELECT ^posts.*, LEFT(^posts.type, 1) AS basetype, UNIX_TIMESTAMP(^posts.created) AS created, ^uservotes.vote as uservote FROM ^posts".$tables." LEFT JOIN ^uservotes ON ^posts.postid=^uservotes.postid AND ^uservotes.userid=$ WHERE ^posts.type='Q'".$sortsql.$ordersql." LIMIT #,#",
-					$userid,$start,$size+1
-				)
+
+			$qarray = qa_db_select_with_pending(
+				qa_db_qs_selectspec($userid, $sort, $start, null, null, false, $full, $size)
 			);
 		}
 		
@@ -234,7 +207,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$userid = qa_get_logged_in_userid();
 		$output = array();
 		
-		if(!$data['postid'])
+		if(!@$data['postid'])
 			return new IXR_Error( 1550, qa_lang('xmlrpc/content_missing') );
 				
 		if(isset($data['action']))
@@ -243,13 +216,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 		if(isset($data['action_id']))
 			$output['acted'] = $data['postid'];
 
-
-		$question = qa_db_read_one_assoc(
-			qa_db_query_sub(
-				"SELECT ^posts.*, LEFT(^posts.type, 1) AS basetype, UNIX_TIMESTAMP(^posts.created) AS created, ^uservotes.vote as uservote FROM ^posts LEFT JOIN ^uservotes ON ^posts.postid=^uservotes.postid AND ^uservotes.userid=$ WHERE ^posts.type='Q' AND ^posts.postid=#",
-				$userid, $data['postid']
-			),
-			true
+		$question = qa_db_select_with_pending(
+			qa_db_full_post_selectspec($userid, $data['postid']);
 		);
 
 		if($question) {
