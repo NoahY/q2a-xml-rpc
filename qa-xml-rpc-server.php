@@ -123,45 +123,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$output = array();
 		
 		if(isset($data['action'])) {
-			$output['action_success'] = false;
-			$type = @$data['action_data']['type'];
-			$vote = @$data['action_data']['vote'];
-			switch($data['action']) {
-				case 'vote':
-		
-					switch(true) {
-						case ($type == 'Q' && $vote > 0 && !qa_opt( 'xml_rpc_bool_q_upvote' )):
-							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/upvoting_questions') );
-							break 2;
-						case ($type == 'Q' && $vote == 0 && !qa_opt( 'xml_rpc_bool_q_unvote' )):
-							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/unvoting_questions') );
-							break 2;
-						case ($type == 'Q' && $vote < 0 && !qa_opt( 'xml_rpc_bool_q_downvote' )):
-							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/downvoting_questions') );
-							break 2;
-						case ($type == 'A' && $vote > 0 && !qa_opt( 'xml_rpc_bool_a_upvote' )):
-							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/upvoting_questions') );
-							break 2;
-						case ($type == 'A' && $vote == 0 && !qa_opt( 'xml_rpc_bool_a_unvote' )):
-							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/unvoting_questions') );
-							break 2;
-						case ($type == 'A' && $vote < 0 && !qa_opt( 'xml_rpc_bool_a_downvote' )):
-							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/downvoting_questions') );
-							break 2;
-					}	
-
-					$output['action_success'] = $this->do_vote($data);
-					break;
-				case 'post':
-					$output['action_success'] = $this->do_post($data);
-					break;
-				case 'favorite':
-					$output['action_success'] = $this->do_favorite($data);
-					break;
-				case 'select':
-					$output['action_success'] = $this->do_select($data);
-					break;
-			}
+			$action_message = doAction($data);
 		}
 
 		$sort = @$data['sort'];
@@ -233,8 +195,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 		
 		if(empty($questions))
 			$output['message'] = qa_lang( 'xmlrpc/no_items_found' );
-		else 
-			$output['message'] = qa_lang_sub( 'xmlrpc/x_items_found', count($questions) );
+		else
+			$output['message'] = isset($data['action'])?$action_message:qa_lang_sub( 'xmlrpc/x_items_found', count($questions) );
 		
 		if(isset($data['meta']))
 			$output['meta'] = $this->get_meta_data();
@@ -273,56 +235,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 		if(!$data['postid'])
 			return new IXR_Error( 1550, qa_lang('xmlrpc/content_missing') );
 				
-		if(isset($data['action'])) {
-			$action_message = qa_lang( 'xmlrpc/action_failed' );
-			$output['action_success'] = false;
-			switch($data['action']) {
-				case 'vote':
-					$type = @$data['action_data']['type'];
-					$vote = @$data['action_data']['vote'];
-		
-					switch(true) {
-						case ($type == 'Q' && $vote > 0 && !qa_opt( 'xml_rpc_bool_q_upvote' )):
-							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/upvoting_questions') );
-							break 2;
-						case ($type == 'Q' && $vote == 0 && !qa_opt( 'xml_rpc_bool_q_unvote' )):
-							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/unvoting_questions') );
-							break 2;
-						case ($type == 'Q' && $vote < 0 && !qa_opt( 'xml_rpc_bool_q_downvote' )):
-							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/downvoting_questions') );
-							break 2;
-						case ($type == 'A' && $vote > 0 && !qa_opt( 'xml_rpc_bool_a_upvote' )):
-							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/upvoting_questions') );
-							break 2;
-						case ($type == 'A' && $vote == 0 && !qa_opt( 'xml_rpc_bool_a_unvote' )):
-							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/unvoting_questions') );
-							break 2;
-						case ($type == 'A' && $vote < 0 && !qa_opt( 'xml_rpc_bool_a_downvote' )):
-							$error = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/downvoting_questions') );
-							break 2;
-					}	
-
-					$output['action_success'] = $this->do_vote($data);
-					if($output['action_success'])
-						$action_message = qa_lang( 'xmlrpc/vote_success' );
-					break;
-				case 'post':
-					$output['action_success'] = $this->do_post($data);
-					if($output['action_success'])
-						$action_message = qa_lang( 'xmlrpc/post_success' );
-					break;
-				case 'favorite':
-					$output['action_success'] = $this->do_favorite($data);
-					if($output['action_success'])
-						$action_message = qa_lang( 'xmlrpc/favorite_success' );
-					break;
-				case 'select':
-					$output['action_success'] = $this->do_select($data);
-					if($output['action_success'])
-						$action_message = qa_lang( 'xmlrpc/select_success' );
-					break;
-			}
-		}
+		if(isset($data['action']))
+			$action_message = $this->doAction($data);
 
 		if(isset($data['action_id']) && $data['postid'] == $data['action_id'])
 			$output['acted'] = $data['postid'];
@@ -1336,6 +1250,58 @@ class q2a_xmlrpc_server extends IXR_Server {
 				);
 			return @$userprofile['name']?$userprofile['name']:qa_get_logged_in_handle();
 		}
+	}
+
+	function doAction($data) {
+		$action_message = qa_lang( 'xmlrpc/action_failed' );
+		$output['action_success'] = false;
+		switch($data['action']) {
+			case 'vote':
+				$type = @$data['action_data']['type'];
+				$vote = @$data['action_data']['vote'];
+	
+				switch(true) {
+					case ($type == 'Q' && $vote > 0 && !qa_opt( 'xml_rpc_bool_q_upvote' )):
+						$action_message = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/upvoting_questions') );
+						break 2;
+					case ($type == 'Q' && $vote == 0 && !qa_opt( 'xml_rpc_bool_q_unvote' )):
+						$action_message = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/unvoting_questions') );
+						break 2;
+					case ($type == 'Q' && $vote < 0 && !qa_opt( 'xml_rpc_bool_q_downvote' )):
+						$action_message = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/downvoting_questions') );
+						break 2;
+					case ($type == 'A' && $vote > 0 && !qa_opt( 'xml_rpc_bool_a_upvote' )):
+						$action_message = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/upvoting_questions') );
+						break 2;
+					case ($type == 'A' && $vote == 0 && !qa_opt( 'xml_rpc_bool_a_unvote' )):
+						$action_message = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/unvoting_questions') );
+						break 2;
+					case ($type == 'A' && $vote < 0 && !qa_opt( 'xml_rpc_bool_a_downvote' )):
+						$action_message = qa_lang_sub('xmlrpc/x_is_disabled',qa_lang('xmlrpc/downvoting_questions') );
+						break 2;
+				}	
+
+				$output['action_success'] = $this->do_vote($data);
+				if($output['action_success'])
+					$action_message = qa_lang( 'xmlrpc/vote_success' );
+				break;
+			case 'post':
+				$output['action_success'] = $this->do_post($data);
+				if($output['action_success'])
+					$action_message = qa_lang( 'xmlrpc/post_success' );
+				break;
+			case 'favorite':
+				$output['action_success'] = $this->do_favorite($data);
+				if($output['action_success'])
+					$action_message = qa_lang( 'xmlrpc/favorite_success' );
+				break;
+			case 'select':
+				$output['action_success'] = $this->do_select($data);
+				if($output['action_success'])
+					$action_message = qa_lang( 'xmlrpc/select_success' );
+				break;
+		}
+		return $action_message;
 	}
 
 	function get_qa_opts() {
