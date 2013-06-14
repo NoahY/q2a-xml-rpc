@@ -131,13 +131,25 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$size = (int)@$data['size'];
 		$full = isset($data['full']);
 
-		if($sort == 'updated')
-			$qarray = $this->get_updated_qs($size);
-		else {
+		switch($sort) {
+			case 'updated':
+				$qarray = $this->get_updated_qs($size);
+				break;
+			case 'favorites':
+				$selectspec=qa_db_posts_basic_selectspec($userid, true);
+				$selectspec['source'].=" JOIN ^userfavorites ON ^posts.postid=^userfavorites.entityid WHERE ^userfavorites.userid=$ AND ^userfavorites.entitytype=$ AND ^posts.type='Q'";
+				array_push($selectspec['arguments'], $userid, QA_ENTITY_QUESTION);
+				$selectspec['sortdesc']='created';
+				$qarray = qa_db_select_with_pending(
+					$selectspec
+				);
 
-			$qarray = qa_db_select_with_pending(
-				qa_db_qs_selectspec($userid, $sort, $start, null, null, false, $full, $size)
-			);
+				break;
+			default:
+				$qarray = qa_db_select_with_pending(
+					qa_db_qs_selectspec($userid, $sort, $start, null, null, false, $full, $size)
+				);
+				break;
 		}
 		
 		$more = false;
