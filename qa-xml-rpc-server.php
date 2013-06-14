@@ -246,7 +246,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 		$question = qa_db_read_one_assoc(
 			qa_db_query_sub(
-				"SELECT *, LEFT(^posts.type, 1) AS basetype, UNIX_TIMESTAMP(^posts.created) AS created, ^uservotes.vote as uservote FROM ^posts".$tables." LEFT JOIN ^uservotes ON ^posts.postid=^uservotes.postid AND ^uservotes.userid=$ WHERE ^posts.type='Q' AND ^posts.postid=$",
+				"SELECT *, ^posts.userid as userid, LEFT(^posts.type, 1) AS basetype, UNIX_TIMESTAMP(^posts.created) AS created, ^uservotes.vote as uservote FROM ^posts LEFT JOIN ^uservotes ON ^posts.postid=^uservotes.postid AND ^uservotes.userid=$ WHERE ^posts.type='Q' AND ^posts.postid=#",
 				$userid, $data['postid']
 			),
 			true
