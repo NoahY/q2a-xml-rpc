@@ -240,7 +240,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		if(isset($data['action']))
 			$action_message = $this->doAction($data);
 
-		if(isset($data['action_id']) && $data['postid'] == $data['action_id'])
+		if(isset($data['action_id']))
 			$output['acted'] = $data['postid'];
 
 
@@ -460,15 +460,13 @@ class q2a_xmlrpc_server extends IXR_Server {
 	
 	function get_full_post($post, $options, $usershtml) {
 		$fields['raw'] = $post;
-		$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
 		$userid = qa_get_logged_in_userid();
-
+		$cookieid=qa_cookie_get();
 		$fields['netvotes_raw']=(int)$post['netvotes'];
-
 		$postid=$post['postid'];
 		$isquestion=($post['basetype']=='Q');
 		$isanswer=($post['basetype']=='A');
-		$isbyuser=qa_post_is_by_user($post, $userid, $cookieid);
+		$isbyuser=@$post['userid']==$userid;
 		$anchor=urlencode(qa_anchor($post['basetype'], $postid));
 		$elementid=isset($options['elementid']) ? $options['elementid'] : $anchor;
 		$microformats=false;
