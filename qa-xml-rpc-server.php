@@ -805,9 +805,6 @@ class q2a_xmlrpc_server extends IXR_Server {
 	}
 	function do_delete($data) {
 	}
-	function do_flag($data) {
-	}
-
 
 	function do_vote($data) {
 		require_once QA_INCLUDE_DIR.'qa-app-votes.php';
