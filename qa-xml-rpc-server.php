@@ -754,6 +754,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		if($permiterror)
 			return false;
 		
+		require_once QA_INCLUDE_DIR.'qa-app-posts.php';
 		$postid = qa_post_create($type, $parentid, $title, $content, $format, $category, $tags, $userid, $notify, $email);
 		return $postid != null;
 	}
