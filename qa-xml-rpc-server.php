@@ -729,7 +729,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 	
 	function do_post($data) {
 		
-		if(!isset($data['action_data']) || !isset($data['type']))
+		if(!isset($data['action_data']) || !isset($data['action_data']['type']))
 			return false;
 		
 		$userid = qa_get_logged_in_userid();
