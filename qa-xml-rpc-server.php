@@ -761,7 +761,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 	function do_edit($data) {
 		
-		if(!isset($data['action_data']) || !isset($data['type']))
+		if(!isset($data['action_data']) || !isset($data['action_data']['type']))
 			return false;
 		
 		$userid = qa_get_logged_in_userid();
@@ -797,6 +797,15 @@ class q2a_xmlrpc_server extends IXR_Server {
 		
 		qa_post_set_content($postid, $title, $content, $format, $tags, $notify, $email, $byuserid);
 		return true;
+	}
+
+	function do_flag($data) {
+	}
+	function do_hide($data) {
+	}
+	function do_delete($data) {
+	}
+	function do_flag($data) {
 	}
 
 
@@ -1135,20 +1144,30 @@ class q2a_xmlrpc_server extends IXR_Server {
 				if($output['action_success'])
 					$action_message = qa_lang( 'xmlrpc/vote_success' );
 				break;
+			case 'favorite':
+				$output['action_success'] = $this->do_favorite($data);
+				if($output['action_success'])
+					$action_message = qa_lang( 'xmlrpc/favorite_success' );
+				break;
+			case 'select':
+				$output['action_success'] = $this->do_select($data);
+				if($output['action_success'])
+					$action_message = qa_lang( 'xmlrpc/select_success' );
+				break;
 			case 'post':
 				$output['action_success'] = $this->do_post($data);
 				if($output['action_success'])
 					$action_message = qa_lang( 'xmlrpc/post_success' );
 				break;
-			case 'flag':
-				$output['action_success'] = $this->do_flag($data);
-				if($output['action_success'])
-					$action_message = qa_lang( 'xmlrpc/flag_success' );
-				break;
 			case 'edit':
 				$output['action_success'] = $this->do_edit($data);
 				if($output['action_success'])
 					$action_message = qa_lang( 'xmlrpc/edit_success' );
+				break;
+			case 'flag':
+				$output['action_success'] = $this->do_flag($data);
+				if($output['action_success'])
+					$action_message = qa_lang( 'xmlrpc/flag_success' );
 				break;
 			case 'hide':
 				$output['action_success'] = $this->do_hide($data);
@@ -1159,16 +1178,6 @@ class q2a_xmlrpc_server extends IXR_Server {
 				$output['action_success'] = $this->do_delete($data);
 				if($output['action_success'])
 					$action_message = qa_lang( 'xmlrpc/delete_success' );
-				break;
-			case 'favorite':
-				$output['action_success'] = $this->do_favorite($data);
-				if($output['action_success'])
-					$action_message = qa_lang( 'xmlrpc/favorite_success' );
-				break;
-			case 'select':
-				$output['action_success'] = $this->do_select($data);
-				if($output['action_success'])
-					$action_message = qa_lang( 'xmlrpc/select_success' );
 				break;
 		}
 		return $action_message;
