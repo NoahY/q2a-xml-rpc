@@ -48,8 +48,11 @@
 
 		'vote_success' => 'Voted Successfully.',
 		'post_success' => 'Posted Successfully.',
+		'edit_success' => 'Edited Successfully.',
 		'favorite_success' => 'Favorited Successfully.',
 		'select_success' => 'Selected Successfully.',
+		'flag_success' => 'Flagged Successfully.',
+		'unflag_success' => 'Unflagged Successfully.',
 		
 		'no_items_found' => 'No items found.',
 		'x_items_found' => 'Retrieved ^ items.',
