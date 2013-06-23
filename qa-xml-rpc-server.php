@@ -831,7 +831,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		
 		$permiterror=qa_user_permit_error('permit_post_'.strtolower($type), QA_LIMIT_QUESTIONS);
 		
-		if($permiterror)
+		if($permiterror) // not allowed
 			return false;
 		
 		require_once QA_INCLUDE_DIR.'qa-app-posts.php';
@@ -881,9 +881,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 	}
 
 	function do_flag($data) {
-		$questionid = (int)@$data['action_id'];
-		$info = @$data['action_data'];
-		$postid = (int)@$info['postid'];
+		$questionid = (int)@$data['postid'];
+		$postid = (int)@$data['action_id'];
 
 		$userid = qa_get_logged_in_userid();
 		$handle=qa_get_logged_in_handle();
@@ -900,11 +899,16 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$question = $post;
 		
 		require_once QA_INCLUDE_DIR.'qa-app-votes.php';
-		qa_flag_set_tohide($post, $userid, $handle, $cookieid, $question);
+		$error=qa_flag_error_html($post, $userid, "");
+		if (!$error) { // allowed
+			if (qa_flag_set_tohide($post, $userid, $handle, $cookieid, $question))
+				qa_post_set_hidden($postid, true);
+			return true;
+		}
+		return false;
 	}
 	function do_unflag($data) {
-		$info = @$data['action_data'];
-		$postid = (int)@$info['postid'];
+		$postid = (int)@$data['action_id'];
 
 		$userid = qa_get_logged_in_userid();
 		$handle=qa_get_logged_in_handle();
@@ -914,9 +918,12 @@ class q2a_xmlrpc_server extends IXR_Server {
 			return false;
 
 		$post=qa_db_select_with_pending(qa_db_full_post_selectspec($userid, $postid));
-		
-		require_once QA_INCLUDE_DIR.'qa-app-votes.php';
-		qa_flag_clear($post, $userid, $handle, $cookieid);
+		if(@$post['userflag'] && (!$post['hidden'])) { // allowed
+			require_once QA_INCLUDE_DIR.'qa-app-votes.php';
+			qa_flag_clear($post, $userid, $handle, $cookieid);
+			return true;
+		}
+		return false;
 	}	
 	function do_hide($data) {
 	}
@@ -938,9 +945,9 @@ class q2a_xmlrpc_server extends IXR_Server {
 		
 		$post=qa_db_select_with_pending(qa_db_full_post_selectspec($userid, $postid));
 
-		$voteerror=qa_vote_error_html($post, $vote, $userid, qa_request());
+		$voteerror=qa_vote_error_html($post, $vote, $userid, "");
 		
-		if ($voteerror === false) {
+		if ($voteerror === false) { // allowed
 			qa_vote_set($post, $userid, qa_get_logged_in_handle(), $cookieid, $vote);
 			return true;
 		}
@@ -957,10 +964,16 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 		require_once QA_INCLUDE_DIR.'qa-app-posts.php';
 		$userid = qa_get_logged_in_userid();
-		
-		qa_post_set_selchildid($questionid, $answerid, $userid);
 
-		return true;
+		$question=qa_db_select_with_pending(qa_db_full_post_selectspec($userid, $questionid));
+
+		$question=$question+qa_page_q_post_rules($question, null, null, $qchildposts); // array union
+
+		if($question['aselectable'] && (!isset($answerid) || ( (!isset($question['selchildid'])) && !qa_opt('do_close_on_select')))) {  // allowed
+			qa_post_set_selchildid($questionid, $answerid, $userid);
+			return true;
+		}
+		return false;
 	}
 	
 	function do_favorite($data) {
