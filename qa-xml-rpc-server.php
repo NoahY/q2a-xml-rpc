@@ -123,7 +123,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$output = array();
 		
 		if(isset($data['action'])) {
-			$action_message = doAction($data);
+			$action_message = $this->do_action($data);
 		}
 
 		$sort = @$data['sort'];
@@ -223,7 +223,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 			return new IXR_Error( 1550, qa_lang('xmlrpc/content_missing') );
 				
 		if(isset($data['action']))
-			$action_message = $this->doAction($data);
+			$action_message = $this->do_action($data);
 
 		if(isset($data['action_id']))
 			$output['acted'] = $data['postid'];
@@ -728,7 +728,10 @@ class q2a_xmlrpc_server extends IXR_Server {
 	}
 	
 	function do_post($data) {
-
+		
+		if(!isset($data['action_data']) || !isset($data['type']))
+			return false;
+		
 		$userid = qa_get_logged_in_userid();
 		$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
 
@@ -746,189 +749,55 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$email = @$input['email'];
 		$parentid = @$input['parentid'];
 		
-		require_once QA_INCLUDE_DIR.'qa-app-users.php';
-		require_once QA_INCLUDE_DIR.'qa-app-limits.php';
-
-	//	First check whether the person has permission to do this
-		switch($type) {
-			case 'Q':
-				if(!qa_opt( 'xml_rpc_bool_question') || qa_user_permit_error('permit_post_q'))
-					return false;
-				break;
-			case 'A':
-				if(!qa_opt( 'xml_rpc_bool_answer') || qa_user_permit_error('permit_post_a', QA_LIMIT_ANSWERS))
-					return false;
-				break;
-			case 'C':
-				if(!qa_opt( 'xml_rpc_bool_comment') || qa_user_permit_error('permit_post_c', QA_LIMIT_COMMENTS))
-					return false;
-				break;
-		}
-
-		require_once QA_INCLUDE_DIR.'qa-app-post-create.php';
-		require_once QA_INCLUDE_DIR.'qa-util-string.php';
-		require_once QA_INCLUDE_DIR.'qa-db-selects.php';
-		require_once QA_INCLUDE_DIR.'qa-app-format.php';
-		require_once QA_INCLUDE_DIR.'qa-app-post-create.php';
-		require_once QA_INCLUDE_DIR.'qa-page-question-view.php';
-		require_once QA_INCLUDE_DIR.'qa-page-question-submit.php';
-		require_once QA_INCLUDE_DIR.'qa-util-sort.php';
-
-	//	Process input
+		$permiterror=qa_user_permit_error('permit_post_'.strtolower($type), QA_LIMIT_QUESTIONS);
 		
-		$in=array();
-		$in['title'] = $title; 
-		$in['content'] = $content; 
-		$in['format'] = $format?$format:""; 
-		$in['text'] = $content; 
-		$in['extra'] = null;
-		$in['tags'] = $tags;
-
-		$in['notify']=$notify ? true : false;
-		$in['email']=$email;
-		$in['queued']=qa_user_moderation_reason() ? true : false;
-
-		switch($type) {
-			case 'Q':
-				
-			//	Get some info we need from the database
-
-				$followpostid=$parentid;
-				
-				$in['categoryid']=$category;
-				
-				@list($categories, $followanswer, $completetags)=qa_db_select_with_pending(
-					qa_db_category_nav_selectspec($in['categoryid'], true),
-					isset($followpostid) ? qa_db_full_post_selectspec($userid, $followpostid) : null,
-					qa_db_popular_tags_selectspec(0, QA_DB_RETRIEVE_COMPLETE_TAGS)
-				);
-				
-				if (!isset($categories[$in['categoryid']]))
-					$in['categoryid']=null;
-				
-				if (@$followanswer['basetype']!='A')
-					$followanswer=null;
-					
-				$errors=array();
-				
-				$filtermodules=qa_load_modules_with('filter', 'filter_question');
-				foreach ($filtermodules as $filtermodule) {
-					$oldin=$in;
-					$filtermodule->filter_question($in, $errors, null);
-					qa_update_post_text($in, $oldin);
-				}
-				
-				if (qa_using_categories() && count($categories) && (!qa_opt('allow_no_category')) && !isset($in['categoryid']))
-					$errors['categoryid']=qa_lang_html('question/category_required'); // check this here because we need to know count($categories)
-				
-				
-				if (empty($errors)) {
-					
-					$questionid=qa_question_create($followanswer, $userid, qa_get_logged_in_handle(), $cookieid,
-						$in['title'], $in['content'], $in['format'], $in['text'], qa_tags_to_tagstring($in['tags']),
-						$in['notify'], $in['email'], $in['categoryid'], $in['extra'], $in['queued']);
-					
-					if (isset($questionid))
-						return true;
-				}
-				break;
-			case 'A':
-			//	Load relevant information about this question and check it exists
-			
-				list($question, $childposts)=qa_db_select_with_pending(
-					qa_db_full_post_selectspec($userid, $questionid),
-					qa_db_full_child_posts_selectspec($userid, $questionid)
-				);
-				
-				if ((@$question['basetype']=='Q') && !isset($question['closedbyid'])) {
-					$answers=qa_page_q_load_as($question, $childposts);
-
-					//	Try to create the new answer
-					
-					$errors=array();
-					
-					$filtermodules=qa_load_modules_with('filter', 'filter_answer');
-					foreach ($filtermodules as $filtermodule) {
-						$oldin=$in;
-						$filtermodule->filter_answer($in, $errors, $question, null);
-						qa_update_post_text($in, $oldin);
-					}
-					
-					if (empty($errors)) {
-						$testwords=implode(' ', qa_string_to_words($in['content']));
-						
-						foreach ($answers as $answer)
-							if (!$answer['hidden'])
-								if (implode(' ', qa_string_to_words($answer['content'])) == $testwords)
-									$errors['content']=qa_lang_html('question/duplicate_content');
-					}
-					
-					if (empty($errors)) {
-						$userid=qa_get_logged_in_userid();
-						$handle=qa_get_logged_in_handle();
-						$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
-						
-						$answerid=qa_answer_create($userid, $handle, $cookieid, $in['content'], $in['format'], $in['text'], $in['notify'], $in['email'],
-							$question, $in['queued']);
-						
-						if (isset($answerid))
-							return true;
-					}
-				}
-
-				break;
-			case 'C':
-
-			//	Load relevant information about this question and check it exists
-			
-				@list($question, $parent, $children, )=qa_db_select_with_pending(
-					qa_db_full_post_selectspec($userid, $questionid),
-					qa_db_full_post_selectspec($userid, $parentid),
-					qa_db_full_child_posts_selectspec($userid, $parentid)
-				);
-				
-				
-				if (
-					(@$question['basetype']=='Q') &&
-					((@$parent['basetype']=='Q') || (@$parent['basetype']=='A'))
-				) {
-					
-
-					$errors=array();
-					
-					$filtermodules=qa_load_modules_with('filter', 'filter_comment');
-					foreach ($filtermodules as $filtermodule) {
-						$oldin=$in;
-						$filtermodule->filter_comment($in, $errors, $question, $parent, null);
-						qa_update_post_text($in, $oldin);
-					}
-					
-					if (empty($errors)) {
-						$testwords=implode(' ', qa_string_to_words($in['content']));
-						
-						foreach ($children as $comment)
-							if (($comment['basetype']=='C') && ($comment['parentid']==$parentid) && !$comment['hidden'])
-								if (implode(' ', qa_string_to_words($comment['content'])) == $testwords)
-									$errors['content']=qa_lang_html('question/duplicate_content');
-					}
-					
-					if (empty($errors)) {
-						$userid=qa_get_logged_in_userid();
-						$handle=qa_get_logged_in_handle();
-						$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
-									
-						$commentid=qa_comment_create($userid, $handle, $cookieid, $in['content'], $in['format'], $in['text'], $in['notify'], $in['email'],
-							$question, $parent, $children, $in['queued']);
-						
-						if (isset($commentid)) 
-							return true;
-					}
-				}
-
-				break;
-		}
-		return false;
+		if($permiterror)
+			return false;
+		
+		$postid = qa_post_create($type, $parentid, $title, $content, $format, $category, $tags, $userid, $notify, $email);
+		return $postid != null;
 	}
+
+	function do_edit($data) {
+		
+		if(!isset($data['action_data']) || !isset($data['type']))
+			return false;
+		
+		$userid = qa_get_logged_in_userid();
+		$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
+
+
+		$postid = (int)@$data['action_id'];
+		$input = $data['action_data'];
+
+		$type = $input['type'];
+		$title = @$input['title'];
+		$content = @$input['content'];
+		$format = @$input['format'];
+		$tags = @$input['tags'];
+		$notify = @$input['notify'];
+		$email = @$input['email'];
+		$parentid = @$input['parentid'];
+
+		// get post
+		$post = qa_db_select_with_pending(
+			qa_db_full_post_selectspec($userid, $postid);
+		);
+				
+		if($post['userid'] != $userid) {
+					
+			$permiterror=qa_user_permit_error('permit_edit_'.strtolower($type));
+			
+			if($permiterror // not allowed
+				|| (($post['basetype']=='Q') && (isset($post['closedbyid']) || (isset($post['selchildid']) && qa_opt('do_close_on_select')))) // closed
+			)
+				return false;
+		}		
+		
+		qa_post_set_content($postid, $title, $content, $format, $tags, $notify, $email, $byuserid);
+		return true;
+	}
+
 
 	function do_vote($data) {
 		require_once QA_INCLUDE_DIR.'qa-app-votes.php';
@@ -1232,7 +1101,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		}
 	}
 
-	function doAction($data) {
+	function do_action($data) {
 		$action_message = qa_lang( 'xmlrpc/action_failed' );
 		$output['action_success'] = false;
 		switch($data['action']) {
@@ -1269,6 +1138,26 @@ class q2a_xmlrpc_server extends IXR_Server {
 				$output['action_success'] = $this->do_post($data);
 				if($output['action_success'])
 					$action_message = qa_lang( 'xmlrpc/post_success' );
+				break;
+			case 'flag':
+				$output['action_success'] = $this->do_flag($data);
+				if($output['action_success'])
+					$action_message = qa_lang( 'xmlrpc/flag_success' );
+				break;
+			case 'edit':
+				$output['action_success'] = $this->do_edit($data);
+				if($output['action_success'])
+					$action_message = qa_lang( 'xmlrpc/edit_success' );
+				break;
+			case 'hide':
+				$output['action_success'] = $this->do_hide($data);
+				if($output['action_success'])
+					$action_message = qa_lang( 'xmlrpc/hide_success' );
+				break;
+			case 'delete':
+				$output['action_success'] = $this->do_delete($data);
+				if($output['action_success'])
+					$action_message = qa_lang( 'xmlrpc/delete_success' );
 				break;
 			case 'favorite':
 				$output['action_success'] = $this->do_favorite($data);
