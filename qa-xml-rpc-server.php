@@ -835,7 +835,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		}		
 
 		require_once QA_INCLUDE_DIR.'qa-app-posts.php';
-		qa_post_set_content($postid, $title, $content, $format, $tags, $notify, $email, $byuserid);
+		qa_post_set_content($postid, $title, $content, $format, $tags, $notify, $email, $userid);
 		return true;
 	}
 
