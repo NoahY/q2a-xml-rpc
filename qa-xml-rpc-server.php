@@ -954,7 +954,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$question=$question+qa_page_q_post_rules($question, null, null, $qchildposts); // array union
 
 		if($question['aselectable'] && (!isset($answerid) || ( (!isset($question['selchildid'])) && !qa_opt('do_close_on_select')))) {  // allowed
-			qa_post_set_selchildid($questionid, isset($data['action_data']['select']?$answerid:null, $userid);
+			qa_post_set_selchildid($questionid, isset($data['action_data']['select'])?$answerid:null, $userid);
 			return true;
 		}
 		return false;
