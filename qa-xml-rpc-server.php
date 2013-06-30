@@ -161,7 +161,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$questions[] = "<less>";
 		
 		foreach($qarray as $question) {
-			if(isset($data['action_id']) && $question['postid'] == $data['action_id'])
+			if(isset($data['action_id']) && $question['postid'] == $data['postid'])
 				$output['acted'] = count($questions);
 
 			$question = $this->get_single_question($data, $question);
@@ -700,21 +700,13 @@ class q2a_xmlrpc_server extends IXR_Server {
 	function do_action($data) {
 		$action_message = qa_lang( 'xmlrpc/action_failed' );
 		$output['action_success'] = false;
+
 		
-		switch($data['action']) {
-			case 'post':
-				break;
-			case 'select':
-				$questionid = (int)@$data['action_id'];
-				if(!$questionid)
-					return $action_message;
-				$post=qa_db_select_with_pending(qa_db_full_post_selectspec($userid, $questionid));
-				break;
-			default:
-				$postid = (int)@$info['postid'];
-				if(!$postid)
-					return $action_message;
-				$post=qa_db_select_with_pending(qa_db_full_post_selectspec($userid, $postid));
+		if($data['action'] != 'post') {
+			$postid = (int)@$data['action_id'];
+			if(!$postid)
+				return $action_message;
+			$post=qa_db_select_with_pending(qa_db_full_post_selectspec($userid, $postid));
 		}
 
 		switch($data['action']) {
@@ -779,7 +771,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$userid = qa_get_logged_in_userid();
 		$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
 
-		$questionid = (int)@$data['action_id'];
+		$questionid = (int)@$data['action_data']['question_id'];
 
 		$input = $data['action_data'];
 
@@ -840,7 +832,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 	}
 
 	function do_flag($data, $post) {
-		$questionid = (int)@$data['postid'];
+		$questionid = (int)@$data['action_data']['question_id'];
 		$postid = (int)@$data['action_id'];
 
 		$userid = qa_get_logged_in_userid();
@@ -925,8 +917,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 	function do_vote($data, $post) {
 		require_once QA_INCLUDE_DIR.'qa-app-votes.php';
+		$postid = (int)@$data['action_id'];
 		$info = @$data['action_data'];
-		$postid = (int)@$info['postid'];
 		$vote = (int)@$info['vote'];
 		$type = @$info['type'];
 
@@ -947,8 +939,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 
 	function do_select($data, $question) {
 		
-		$questionid = (int)@$data['action_id'];
-		$answerid = @$data['action_data'];
+		$questionid = (int)@$data['action_data']['question_id'];
+		$answerid = @$data['action_id'];
 
 		if($questionid === null)
 			return false;
@@ -962,15 +954,15 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$question=$question+qa_page_q_post_rules($question, null, null, $qchildposts); // array union
 
 		if($question['aselectable'] && (!isset($answerid) || ( (!isset($question['selchildid'])) && !qa_opt('do_close_on_select')))) {  // allowed
-			qa_post_set_selchildid($questionid, $answerid, $userid);
+			qa_post_set_selchildid($questionid, isset($data['action_data']['select']?$answerid:null, $userid);
 			return true;
 		}
 		return false;
 	}
 	
 	function do_favorite($data) {
+		$postid = (int)@$data['action_id'];
 		$info = @$data['action_data'];
-		$postid = (int)@$info['postid'];
 		$favorite = isset($info['favorite']);
 		$type = @$info['type'];
 
