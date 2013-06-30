@@ -711,7 +711,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 				$post=qa_db_select_with_pending(qa_db_full_post_selectspec($userid, $questionid));
 				break;
 			default:
-				$postid = (int)@$info['postid']
+				$postid = (int)@$info['postid'];
 				if(!$postid)
 					return $action_message;
 				$post=qa_db_select_with_pending(qa_db_full_post_selectspec($userid, $postid));
