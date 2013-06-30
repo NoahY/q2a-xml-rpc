@@ -1122,7 +1122,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		
 		require_once QA_INCLUDE_DIR.'qa-app-limits.php';
 
-		if (qa_limits_remaining(null, QA_LIMIT_LOGINS)) {
+		if (qa_user_limits_remaining(QA_LIMIT_LOGINS)) {
 			require_once QA_INCLUDE_DIR.'qa-db-users.php';
 			require_once QA_INCLUDE_DIR.'qa-db-selects.php';
 		
