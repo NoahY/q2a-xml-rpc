@@ -700,7 +700,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 	function do_action($data) {
 		$action_message = qa_lang( 'xmlrpc/action_failed' );
 		$output['action_success'] = false;
-
+		$userid = qa_get_logged_in_userid();
 		
 		if($data['action'] != 'post') {
 			$postid = (int)@$data['action_id'];
@@ -857,14 +857,10 @@ class q2a_xmlrpc_server extends IXR_Server {
 		return false;
 	}
 	function do_unflag($data, $post) {
-		$postid = (int)@$data['action_id'];
 
 		$userid = qa_get_logged_in_userid();
 		$handle=qa_get_logged_in_handle();
 		$cookieid=isset($userid) ? qa_cookie_get() : qa_cookie_get_create(); // create a new cookie if necessary
-		
-		if($postid === null)
-			return false;
 
 		if(@$post['userflag'] && (!$post['hidden'])) { // allowed
 			require_once QA_INCLUDE_DIR.'qa-app-votes.php';
