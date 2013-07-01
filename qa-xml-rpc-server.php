@@ -161,7 +161,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 			$questions[] = "<less>";
 		
 		foreach($qarray as $question) {
-			if(isset($data['action_id']) && $question['postid'] == $data['postid'])
+			if(isset(isset($data['action_id']) && $data['postid']) && $question['postid'] == $data['postid'])
 				$output['acted'] = count($questions);
 
 			$question = $this->get_single_question($data, $question);
