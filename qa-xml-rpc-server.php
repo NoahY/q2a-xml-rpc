@@ -892,6 +892,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 			($rules['reshowimmed'] || ($nothiddenbyother && !$post['flagcount']));
 			// cannot reshow a question if it was hidden by someone else, or if it has flags - unless you have global hide/show permissions
 		
+		require_once QA_INCLUDE_DIR.'qa-app-posts.php';
 		if($hideable && isset($data['action_data']['hide'])) // hide allowed
 			qa_post_set_hidden($postid, true, $userid);
 		else if ($showable && !isset($data['action_data']['hide'])) // reshow allowed
@@ -907,6 +908,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		if(!$deleteable)
 			return false;
 			
+		require_once QA_INCLUDE_DIR.'qa-app-posts.php';
 		qa_post_delete($postid);
 		return true;
 	}
