@@ -958,7 +958,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 			qa_post_set_selchildid($questionid, $answerid, $userid);
 			return true;
 		}
-		else if(!isset($data['action_data']['select']) && $question['aselectable'] && isset($answerid) && $question['selchildid'] == $answerid) {  // allowed to unselect
+		else if(!isset($data['action_data']['select']) && $question['aselectable'] && isset($answerid) && (int)$question['selchildid'] == $answerid) {  // allowed to unselect
 			qa_post_set_selchildid($questionid, $answerid, $userid);
 			return true;
 		}
