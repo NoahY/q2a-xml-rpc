@@ -905,6 +905,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 	function do_delete($data, $post) {
 		$userlevel=qa_user_level_for_post($post);
 		$deleteable=$post['hidden'] && !qa_user_permit_error('permit_delete_hidden', null, $userlevel);
+		$postid = (int)@$data['action_id'];
 		
 		if(!$deleteable)
 			return false;
