@@ -948,6 +948,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$userid = qa_get_logged_in_userid();
 
 		require_once QA_INCLUDE_DIR.'qa-app-posts.php';
+		require_once(QA_INCLUDE_DIR.'qa-page-question-view.php');
 
 		$qchildposts = qa_db_select_with_pending(qa_db_full_child_posts_selectspec($userid, $questionid));
 		
