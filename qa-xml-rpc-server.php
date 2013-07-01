@@ -703,7 +703,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$userid = qa_get_logged_in_userid();
 		
 		if($data['action'] != 'post') {
-			$postid = (int)@$data['action_id'];
+			$postid = $data['action']=='select'?(int)@$data['action_data']['question_id']:(int)@$data['action_id'];
 			if(!$postid)
 				return $action_message;
 			$post=qa_db_select_with_pending(qa_db_full_post_selectspec($userid, $postid));
@@ -940,7 +940,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 	function do_select($data, $question) {
 		
 		$questionid = (int)@$data['action_data']['question_id'];
-		$answerid = @$data['action_id'];
+		$answerid = (int)@$data['action_id'];
 
 		if($questionid === null)
 			return false;
