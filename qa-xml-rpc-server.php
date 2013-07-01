@@ -873,6 +873,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 		$userid=qa_get_logged_in_userid();
 		$cookieid=qa_cookie_get();
 		$userlevel=qa_user_level_for_post($post);
+		$postid = (int)@$data['action_id'];
 
 		$rules['closed']=($post['basetype']=='Q') && (isset($post['closedbyid']) || (isset($post['selchildid']) && qa_opt('do_close_on_select')));
 		$rules['isbyuser']=qa_post_is_by_user($post, $userid, $cookieid);
