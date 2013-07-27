@@ -144,7 +144,7 @@ class q2a_xmlrpc_server extends IXR_Server {
 				break;
 			default:
 				$qarray = qa_db_select_with_pending(
-					qa_db_qs_selectspec($userid, $sort, $start, null, null, false, $full, $size)
+					qa_db_qs_selectspec($userid, $sort, $start, null, null, false, $full, $size+1)
 				);
 				break;
 		}
