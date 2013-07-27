@@ -134,8 +134,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 				break;
 			case 'favorites':
 				$selectspec=qa_db_posts_basic_selectspec($userid, true);
-				$selectspec['source'].=" JOIN ^userfavorites AS uf ON ^posts.postid=uf.entityid WHERE uf.userid=$ AND uf.entitytype=$ AND ^posts.type='Q'";
-				array_push($selectspec['arguments'], $userid, QA_ENTITY_QUESTION);
+				$selectspec['source'].=" JOIN ^userfavorites AS uf ON ^posts.postid=uf.entityid WHERE uf.userid=$ AND uf.entitytype=$ AND ^posts.type='Q' LIMIT #";
+				array_push($selectspec['arguments'], $userid, QA_ENTITY_QUESTION, $size+1);
 				$selectspec['sortdesc']='created';
 				$qarray = qa_db_select_with_pending(
 					$selectspec
