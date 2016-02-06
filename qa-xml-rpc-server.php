@@ -109,8 +109,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 	function call_get_questions( $args ) {
 
 		// Parse the arguments, assuming they're in the correct order
-		$username = mysql_real_escape_string( $args[0] );
-		$password   = mysql_real_escape_string( $args[1] );
+		$username = qa_db_escape_string( $args[0] );
+		$password = qa_db_escape_string( $args[1] );
 		$data = @$args[2];
 
 		if ( !$this->login( $username, $password ) )
