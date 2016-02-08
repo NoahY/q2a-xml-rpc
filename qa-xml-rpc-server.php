@@ -87,8 +87,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 	function call_verify_connection( $args ) {
 
 		// Parse the arguments, assuming they're in the correct order
-		$username = escape( $args[0] );
-		$password  = escape( $args[1] );
+		$username = qa_db_escape_string( $args[0] );
+		$password  = qa_db_escape_string( $args[1] );
 
 		if ( !$this->login( $username, $password ) )
 			return $this->error;
@@ -109,8 +109,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 	function call_get_questions( $args ) {
 
 		// Parse the arguments, assuming they're in the correct order
-		$username = mysql_real_escape_string( $args[0] );
-		$password   = mysql_real_escape_string( $args[1] );
+		$username = qa_db_escape_string( $args[0] );
+		$password = qa_db_escape_string( $args[1] );
 		$data = @$args[2];
 
 		if ( !$this->login( $username, $password ) )
@@ -203,8 +203,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 	function call_get_question( $args ) {
 	
 		// Parse the arguments, assuming they're in the correct order
-		$username = mysql_real_escape_string( $args[0] );
-		$password   = mysql_real_escape_string( $args[1] );
+		$username = qa_db_escape_string( $args[0] );
+		$password = qa_db_escape_string( $args[1] );
 		$data = @$args[2];
 
 		if ( !$this->login( $username, $password ) )
@@ -254,8 +254,8 @@ class q2a_xmlrpc_server extends IXR_Server {
 	function call_vote( $args ) {
 
 		// Parse the arguments, assuming they're in the correct order
-		$username = mysql_real_escape_string( $args[0] );
-		$password   = mysql_real_escape_string( $args[1] );
+		$username = qa_db_escape_string( $args[0] );
+		$password = qa_db_escape_string( $args[1] );
 		$data = @$args[2];
 
 		$type = @$data['action_data']['type'];
